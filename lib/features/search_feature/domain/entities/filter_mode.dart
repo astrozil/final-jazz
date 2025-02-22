@@ -1,0 +1,1 @@
+enum FilterMode {songs,albums,artists}
