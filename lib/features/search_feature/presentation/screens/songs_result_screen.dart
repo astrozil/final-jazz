@@ -1,7 +1,9 @@
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jazz/features/search_feature/domain/entities/song.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/search/search_bloc.dart';
+import 'package:jazz/features/stream_feature/presentation/bloc/playerBloc/player_bloc.dart';
  // Adjust the import path as needed
 
 class SongsResultScreen extends StatelessWidget {
@@ -36,7 +38,11 @@ class SongsResultScreen extends StatelessWidget {
                   title: Text(song.title),
                   subtitle: Text(song.artist),
                   onTap: () {
-                    // Optionally handle tap, e.g., navigate to a song details page.
+                    final isFromAlbum = context.read<PlayerBloc>().state.isFromAlbum;
+                    if(isFromAlbum){
+                      context.read<PlayerBloc>().add(UpdateStateEvent(state: context.read<PlayerBloc>().state.copyWith(isFromAlbum: false)));
+                    }
+                    context.read<PlayerBloc>().add(PlaySongEvent(song: left(song)));
                   },
                 );
               },

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jazz/features/search_feature/domain/entities/album.dart';
+import 'package:jazz/features/search_feature/presentation/bloc/albumBloc/album_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/search/search_bloc.dart';
+import 'package:jazz/features/search_feature/presentation/screens/album_Screen.dart';
  // Adjust the import path
 
 class AlbumsResultScreen extends StatelessWidget {
@@ -36,7 +38,11 @@ class AlbumsResultScreen extends StatelessWidget {
                   title: Text(album.title),
                   subtitle: Text("${album.artist} • ${album.year}"),
                   onTap: () {
-                    // Optionally handle tap, e.g. navigate to an album details page.
+                    print(album.browseId);
+                    context.read<AlbumBloc>().add(SearchAlbum(albumId: albums[index].browseId));
+                    Navigator.push(context, MaterialPageRoute(builder: (context){
+                      return AlbumScreen();
+                    }));
                   },
                 );
               },

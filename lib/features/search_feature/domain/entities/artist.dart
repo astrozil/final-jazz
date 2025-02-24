@@ -1,3 +1,4 @@
+import 'package:jazz/features/search_feature/domain/entities/album.dart';
 import 'package:jazz/features/search_feature/domain/entities/thumbnails.dart';
 
 class Artist {
@@ -8,6 +9,9 @@ class Artist {
   final String resultType;
   final String shuffleId;
   final List<YtThumbnail> thumbnails;
+  final List<Album> albums;
+  final String description;
+  final List<Single> singles;
 
   Artist({
     required this.name,
@@ -17,6 +21,9 @@ class Artist {
     required this.resultType,
     required this.shuffleId,
     required this.thumbnails,
+    required this.albums,
+    required this.description,
+    required this.singles
   });
 
   Artist copyWith({
@@ -27,6 +34,9 @@ class Artist {
     String? resultType,
     String? shuffleId,
     List<YtThumbnail>? thumbnails,
+    List<Album>? albums,
+    String? description,
+    List<Single>? singles
   }) {
     return Artist(
       name: name ?? this.name,
@@ -36,6 +46,24 @@ class Artist {
       resultType: resultType ?? this.resultType,
       shuffleId: shuffleId ?? this.shuffleId,
       thumbnails: thumbnails ?? this.thumbnails,
+      albums: albums ?? this.albums,
+      description: description ?? this.description,
+      singles: singles ?? this.singles
     );
   }
+}
+
+
+class Single {
+  final String browseId;
+  final YtThumbnail thumbnail;
+  final String title;
+  final String year;
+
+  Single({
+    required this.browseId,
+    required this.thumbnail,
+    required this.title,
+    required this.year,
+  });
 }

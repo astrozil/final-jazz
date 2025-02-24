@@ -42,7 +42,8 @@ class RelatedSongDatasource {
                   ? video['artists'][0]['name']
                   : "",
               id: video['videoId'] ?? "",
-              kind: video['category'] ?? "",
+              resultType: video["resultType"]?? "" ,
+              category: video['category'] ?? "",
               browseId: video["browseId"] ?? "",
               thumbnails: YtThumbnails(
                 defaultThumbnail: ytThumbnail,

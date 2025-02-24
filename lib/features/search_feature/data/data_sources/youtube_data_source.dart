@@ -40,7 +40,8 @@ class YouTubeDataSource {
                   ? video['artists'][0]['name']
                   : video['artist'] ?? '',
               id: video['videoId'] ?? "",
-              kind: video['category'] ?? "",
+              resultType: video['resultType'] ?? "",
+              category: video['category'] ?? "",
               browseId: video['browseId'] ?? '',
               thumbnails: YtThumbnails(
                 defaultThumbnail: YtThumbnail(
@@ -82,7 +83,10 @@ class YouTubeDataSource {
                 ? video['artists'][0]['name']
                 : video['artist'] ?? '',
             id: video['videoId'] ?? "",
-            kind: video['category'] ?? "",
+
+            resultType: video['resultType']?? "",
+            category: video['category'] ?? "",
+
             browseId: video['browseId'] ?? '',
             thumbnails: YtThumbnails(
               defaultThumbnail: YtThumbnail(
@@ -137,6 +141,7 @@ class YouTubeDataSource {
             tracks: [], // Not provided in JSON.
             year: albumData['year'] ?? "",
             type: albumData['type'] ?? "",
+            browseId: albumData['browseId'] ?? ""
           ),
         );
       }
@@ -163,6 +168,9 @@ class YouTubeDataSource {
               width: t['width'] ?? 0,
               height: t['height'] ?? 0,
             )).toList(),
+            albums: [],
+            description: "",
+            singles: []
           ),
         );
       }

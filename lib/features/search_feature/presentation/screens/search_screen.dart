@@ -128,14 +128,22 @@ class _SearchScreenState extends State<SearchScreen>{
                           return Center(child: CircularProgressIndicator());
                         } else if (state is SongLoaded) {
 
-                          List<Song> songs = state.songs.where((s)=> s.kind == "Songs").toList();
-                          List videos = state.songs.where((s)=> s.kind == "Videos").toList();
-                          List albums = state.songs.where((s)=> s.kind == "Albums").toList();
-                          List artists = state.songs.where((s)=> s.kind == "Artists").toList();
-                          List featured_playlists = state.songs.where((s)=> s.kind == "Featured Playlists").toList();
-                          List community_playlists = state.songs.where((s)=> s.kind == "Community Playlists").toList();
+                          List<Song> songs = state.songs.where((s)=> s.category == "Songs").toList();
+                          dynamic topResult = state.songs.where((s)=> s.category == "Top result").first;
+                          List videos = state.songs.where((s)=> s.category == "Videos").toList();
+                          List albums = state.songs.where((s)=> s.category == "Albums").toList();
+                          List artists = state.songs.where((s)=> s.category == "Artists").toList();
+                          List featured_playlists = state.songs.where((s)=> s.category == "Featured Playlists").toList();
+                          List community_playlists = state.songs.where((s)=> s.category == "Community Playlists").toList();
                         return ListView(
                           children: [
+                            Text("Top Result"),
+                            ListTile(
+                              leading: Image.network(topResult.thumbnails.defaultThumbnail.url),
+                              title: topResult.resultType != "artist" ?  Text(topResult.title): Text(topResult.artist),
+                              subtitle:topResult.resultType != "artist" ? Text("${topResult.resultType == 'video' ? "song" : topResult.resultType} . ${topResult.artist}") : Text(topResult.resultType),
+                            ),
+
                             Row(
                               children: [
                                 Text("Songs"),

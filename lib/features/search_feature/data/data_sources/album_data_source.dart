@@ -28,7 +28,8 @@ class AlbumDatasource {
                     title: track['title'],
                     artist: track['artists'][0]['name'],
                     id: track['videoId'],
-                    kind: "",
+                    resultType:  track['resultType'] ?? "",
+                    category: "",
                     browseId: '',
                     thumbnails: YtThumbnails(
                         defaultThumbnail: YtThumbnail(
@@ -57,11 +58,12 @@ class AlbumDatasource {
                 width: data['thumbnails'][0]['width'],
                 height: data['thumbnails'][0]['height']
             ),
-            title: data['title'],
-            trackCount: data['trackCount'],
+            title: data['title']?? "",
+            trackCount: data['trackCount']?? 0,
             tracks:tracks,
-           year: data['year'],
-           type: data['type']
+           year: data['year']?? "",
+           type: data['type'] ?? "",
+             browseId: data['browseId'] ?? ""
         );
 
       }

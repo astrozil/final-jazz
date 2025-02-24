@@ -12,6 +12,7 @@ class Album {
   final List<RelatedSong> tracks;
   final String year;
   final String type;
+  final String browseId;
 
   Album({
     required this.artist,
@@ -24,6 +25,7 @@ class Album {
     required this.tracks,
     required this.year,
     required this.type,
+    required this.browseId
   });
 
   Album copyWith({
@@ -37,6 +39,7 @@ class Album {
     List<RelatedSong>? tracks,
     String? year,
     String? type,
+    String? browseId
   }) {
     return Album(
       artist: artist ?? this.artist,
@@ -49,6 +52,7 @@ class Album {
       tracks: tracks ?? this.tracks,
       year: year ?? this.year,
       type: type ?? this.type,
+      browseId: browseId ??this.browseId
     );
   }
 }

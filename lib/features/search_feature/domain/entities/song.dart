@@ -5,9 +5,9 @@ class Song extends Equatable {
   final String url;
   final String title;
   final String artist;
-
+ final String resultType;
   final String id;
-  final String kind;
+  final String category;
   final String browseId;
   final YtThumbnails thumbnails;
 
@@ -17,9 +17,10 @@ class Song extends Equatable {
     required this.title,
     required this.artist,
     required this.id,
-    required this.kind,
+    required this.category,
     required this.browseId,
     required this.thumbnails,
+    required this.resultType
 
   });
   Song copyWith({
@@ -27,7 +28,8 @@ class Song extends Equatable {
     String? title,
     String? artist,
     String? id,
-    String? kind,
+    String? category,
+    String? resultType,
     String? browseId,
     YtThumbnails? thumbnails,
   }) {
@@ -36,7 +38,8 @@ class Song extends Equatable {
       title: title ?? this.title,
       artist: artist ?? this.artist,
       id: id ?? this.id,
-      kind: kind ?? this.kind,
+      resultType: resultType ?? this.resultType,
+      category: category ?? this.category,
       browseId: browseId ?? this.browseId,
       thumbnails: thumbnails ?? this.thumbnails,
     );
