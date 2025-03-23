@@ -15,13 +15,14 @@ class RelatedSongDatasource {
   Future<List<RelatedSong>> getRelatedSongs(
       String videoId, List<RelatedSong> existingRelatedSongs) async {
     try {
+
       final response = await dio.get("$baseUrl$videoId");
 
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data as List;
         final List<RelatedSong> fetchedSongs = data.map((video) {
           // Safely extract thumbnail data
-          final thumbnailsData = video['thumbnail'];
+          final thumbnailsData = video['thumbnails'];
           final thumbnail = (thumbnailsData is List && thumbnailsData.isNotEmpty)
               ? thumbnailsData[0]
               : null;
@@ -33,25 +34,9 @@ class RelatedSongDatasource {
             height: thumbnail?['height'] ?? 0,
           );
 
-          return RelatedSong(
-            url: "",
-            song: Song(
-              url: "https://www.youtube.com/watch?v=${video['videoId']}",
-              title: video['title'] ?? "",
-              artist: video['artists'] is List && video['artists'].isNotEmpty
-                  ? video['artists'][0]['name']
-                  : "",
-              id: video['videoId'] ?? "",
-              resultType: video["resultType"]?? "" ,
-              category: video['category'] ?? "",
-              browseId: video["browseId"] ?? "",
-              thumbnails: YtThumbnails(
-                defaultThumbnail: ytThumbnail,
-                mediumThumbnail: ytThumbnail,
-                highThumbnail: ytThumbnail,
-              ),
-            ),
-          );
+
+
+          return RelatedSong.fromJson(video);
         }).toList();
 
         // Create a set of existing song IDs for efficient filtering.
@@ -62,7 +47,7 @@ class RelatedSongDatasource {
         final uniqueSongs = fetchedSongs
             .where((song) => !existingIds.contains(song.song.id))
             .toList();
-
+        print(uniqueSongs.length);
         return uniqueSongs;
       } else {
         // Handle non-200 responses appropriately.
@@ -71,7 +56,9 @@ class RelatedSongDatasource {
       }
     } catch (error) {
       // Log the error or handle it as needed.
-      rethrow;
+      print("THISSS is errrorrr");
+       print(error.toString());
+       rethrow;
     }
   }
 }

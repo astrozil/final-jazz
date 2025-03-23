@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:jazz/core/failure/failure.dart';
 import 'package:jazz/features/search_feature/data/data_sources/album_data_source.dart';
+import 'package:jazz/features/search_feature/data/data_sources/artist_data_source.dart';
 import 'package:jazz/features/search_feature/data/data_sources/youtube_data_source.dart';
 import 'package:jazz/features/search_feature/domain/entities/album.dart';
 import 'package:jazz/features/search_feature/domain/entities/artist.dart';
@@ -14,7 +15,8 @@ import '../../domain/repositories/song_repository.dart';
 class SongRepositoryImpl implements SongRepository {
   final YouTubeDataSource dataSource;
   final AlbumDatasource albumDatasource;
-  SongRepositoryImpl({required this.dataSource,required this.albumDatasource});
+  final ArtistDataSource artistDataSource;
+  SongRepositoryImpl({required this.dataSource,required this.albumDatasource,required this.artistDataSource});
 
   @override
   Future<List<Song>?> search(String query) async {
@@ -48,7 +50,12 @@ class SongRepositoryImpl implements SongRepository {
   }
 
   @override
-  Future<List<Song>?> searchSongs(String query)async {
-    return await dataSource.searchSongs(query);
+  Future<List<Song>?> searchSongs(String query) {
+    return dataSource.searchSongs(query);
+  }
+
+  @override
+  Future<Artist> fetchArtist(String artistId) {
+    return artistDataSource.fetchArtist(artistId);
   }
 }

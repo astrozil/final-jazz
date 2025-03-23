@@ -29,7 +29,7 @@ class DownloadedSongsScreen extends StatelessWidget {
                   context.read<PlayerBloc>() .add(PlaySongEvent(song:right(downloadedSong)));
 
               await Future.delayed(const Duration(seconds: 1),(){
-               if(context.mounted) context.read<PlayerBloc>().add(UpdateStateEvent(state: context.read<PlayerBloc>().state.copyWith(relatedSongs: SongHistory(history: right(state.downloadedSongs)))));
+               if(context.mounted) context.read<PlayerBloc>().add(UpdateStateEvent(state: context.read<PlayerBloc>().state.copyWith(relatedSongs: SongHistory(history: right(state.downloadedSongs)),currentSongIndex: index)));
               });
 
                 },

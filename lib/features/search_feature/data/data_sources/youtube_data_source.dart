@@ -33,34 +33,7 @@ class YouTubeDataSource {
         List<Song> songs = [];
         for (var video in data) {
           songs.add(
-            Song(
-              url: "https://www.youtube.com/watch?v=${video['videoId']}",
-              title: video['title'] ?? "",
-              artist: video['artists'] != null
-                  ? video['artists'][0]['name']
-                  : video['artist'] ?? '',
-              id: video['videoId'] ?? "",
-              resultType: video['resultType'] ?? "",
-              category: video['category'] ?? "",
-              browseId: video['browseId'] ?? '',
-              thumbnails: YtThumbnails(
-                defaultThumbnail: YtThumbnail(
-                  url: video['thumbnails'][0]['url'] ?? "",
-                  width: video['thumbnails'][0]['width'] ?? 0,
-                  height: video['thumbnails'][0]['height'] ?? 0,
-                ),
-                mediumThumbnail: YtThumbnail(
-                  url: video['thumbnails'][0]['url'] ?? "",
-                  width: video['thumbnails'][0]['width'] ?? 0,
-                  height: video['thumbnails'][0]['height'] ?? 0,
-                ),
-                highThumbnail: YtThumbnail(
-                  url: video['thumbnails'][0]['url'] ?? "",
-                  width: video['thumbnails'][0]['width'] ?? 0,
-                  height: video['thumbnails'][0]['height'] ?? 0,
-                ),
-              ),
-            ),
+            Song.fromJson(video)
           );
         }
         return songs;
@@ -79,10 +52,12 @@ class YouTubeDataSource {
           Song(
             url: "https://www.youtube.com/watch?v=${video['videoId']}",
             title: video['title'] ?? "",
-            artist: video['artists'] != null
+            artists: video['artists'] != null
                 ? video['artists'][0]['name']
                 : video['artist'] ?? '',
             id: video['videoId'] ?? "",
+            duration: video['duration'] ?? "",
+            album: video['album'] ?? {},
 
             resultType: video['resultType']?? "",
             category: video['category'] ?? "",
@@ -156,22 +131,7 @@ class YouTubeDataSource {
       List<Artist> artists = [];
       for (var artistData in rawData) {
         artists.add(
-          Artist(
-            name: artistData['artist'] ?? "",
-            browseId: artistData['browseId'] ?? "",
-            category: artistData['category'] ?? "",
-            radioId: artistData['radioId'] ?? "",
-            resultType: artistData['resultType'] ?? "",
-            shuffleId: artistData['shuffleId'] ?? "",
-            thumbnails: (artistData['thumbnails'] as List).map((t) => YtThumbnail(
-              url: t['url'] ?? "",
-              width: t['width'] ?? 0,
-              height: t['height'] ?? 0,
-            )).toList(),
-            albums: [],
-            description: "",
-            singles: []
-          ),
+          Artist.fromJson(artistData)
         );
       }
       return artists;

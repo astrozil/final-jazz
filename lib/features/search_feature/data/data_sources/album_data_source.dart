@@ -26,11 +26,13 @@ class AlbumDatasource {
                 song: Song(
                     url: 'https://www.youtube.com/watch?v=${track['videoId']}',
                     title: track['title'],
-                    artist: track['artists'][0]['name'],
+                    artists: track['artists'] as List<dynamic>,
                     id: track['videoId'],
                     resultType:  track['resultType'] ?? "",
                     category: "",
                     browseId: '',
+                    duration: track['duration'] ?? "",
+                    album: track['album'] is Map? track['album']: {},
                     thumbnails: YtThumbnails(
                         defaultThumbnail: YtThumbnail(
                             url: "",

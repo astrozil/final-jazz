@@ -1,8 +1,12 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:jazz/features/auth_feature/domain/entities/user.dart';
+import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc.dart';
 import 'package:jazz/features/lyrics_feature/presentation/bloc/lyrics_bloc/lyrics_bloc.dart';
 import 'package:jazz/features/lyrics_feature/presentation/screens/lyrics_screen.dart';
+import 'package:jazz/features/playlist_feature/domain/repositories/playlist_repo.dart';
+import 'package:jazz/features/playlist_feature/presentation/bloc/playlist_bloc/playlist_bloc.dart';
 import 'package:jazz/features/search_feature/domain/entities/song.dart';
 import 'package:jazz/features/stream_feature/domain/entities/RelatedSong.dart';
 import 'package:jazz/features/stream_feature/domain/entities/repeat_mode.dart';
@@ -15,6 +19,46 @@ import 'package:jazz/features/stream_feature/presentation/screens/relatedSongsSc
 
 class ExpandedCurrentSong extends StatelessWidget {
   const ExpandedCurrentSong({super.key});
+  void _showBottomSheet(BuildContext context,String songId) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(16),
+          height: 200,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, state) {
+                if(state is UserDataFetched){
+                  AppUser user = state.user;
+                  if(user.favouriteSongs.contains(songId)){
+                    return ElevatedButton(onPressed: (){
+                      Navigator.pop(context);
+                      context.read<PlaylistBloc>().add(RemoveFavouriteSong(songId: songId));
+                    }, child: Text("Remove From Favorite Songs"));
+                  }else{
+                    return ElevatedButton(onPressed: (){
+                      Navigator.pop(context);
+                      context.read<PlaylistBloc>().add(AddFavouriteSong(songId: songId));
+
+                    }, child: Text("Add to Favourite Songs"));
+                }
+                }
+                return CircularProgressIndicator();
+              },
+            )
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +222,20 @@ class ExpandedCurrentSong extends StatelessWidget {
                       // );
 
                     }, child: const Text("Lyrics")),
+                     state.currentSong!.fold(
+                         (song){
+                          return ElevatedButton(onPressed: ()
+                          {
 
+
+                            _showBottomSheet(context, song.id);
+                            context.read<AuthBloc>().add(FetchUserDataEvent());
+                          }, child: Text("Favourite Songs"));
+
+                         }
+                     , (downloadedSong){
+                           return SizedBox();
+                     }),
 
                       BlocBuilder<PlayerBloc, Player>(
                         builder: (context, state) {

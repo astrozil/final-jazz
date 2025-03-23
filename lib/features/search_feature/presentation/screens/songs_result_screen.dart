@@ -36,7 +36,9 @@ class SongsResultScreen extends StatelessWidget {
                   )
                       : const Icon(Icons.music_note),
                   title: Text(song.title),
-                  subtitle: Text(song.artist),
+                  subtitle: Text( song.artists
+                      .map((artist) => artist['name'] as String)
+                      .join(', '),),
                   onTap: () {
                     final isFromAlbum = context.read<PlayerBloc>().state.isFromAlbum;
                     if(isFromAlbum){

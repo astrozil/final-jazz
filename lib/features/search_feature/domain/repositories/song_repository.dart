@@ -14,6 +14,7 @@ abstract class SongRepository {
   Future<List<Artist>?> searchArtists(String query);
   Future<Either<Failure,Album>> searchAlbum(String albumId);
   Future<Either<Failure,YtThumbnail>> fetchTrackThumbnail(String   songId);
+  Future<Artist> fetchArtist(String artistId);
 }
 
     

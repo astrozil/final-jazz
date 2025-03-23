@@ -9,12 +9,20 @@ class YtThumbnail {
     required this.height,
   });
 
-  factory YtThumbnail.fromJson(Map<String, dynamic> json) {
+  factory YtThumbnail.fromJson(Map? json) {
     return YtThumbnail(
-      url: json['url'],
-      width: json['width'],
-      height: json['height'],
+      url: json?['url'] as String? ?? "",
+      width: json?['width'] as int? ?? 0,
+      height: json?['height'] as int? ?? 0,
     );
+  }
+
+  Map<dynamic, dynamic> toJson() {
+    return {
+      'url': url,
+      'width': width,
+      'height': height,
+    };
   }
 }
 
@@ -29,11 +37,19 @@ class YtThumbnails {
     required this.highThumbnail,
   });
 
-  factory YtThumbnails.fromJson(Map<String, dynamic> json) {
+  factory YtThumbnails.fromJson(List json) {
     return YtThumbnails(
-      defaultThumbnail: YtThumbnail.fromJson(json['default']),
-      mediumThumbnail: YtThumbnail.fromJson(json['medium']),
-      highThumbnail: YtThumbnail.fromJson(json['high']),
+      defaultThumbnail: YtThumbnail.fromJson(json[0] as Map? ?? {}),
+      mediumThumbnail: YtThumbnail.fromJson(json[0] as Map? ?? {}),
+      highThumbnail: YtThumbnail.fromJson(json[0] as Map? ?? {}),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'default': defaultThumbnail.toJson(),
+      'medium': mediumThumbnail.toJson(),
+      'high': highThumbnail.toJson(),
+    };
   }
 }

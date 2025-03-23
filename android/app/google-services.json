@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "87278271272",
+    "project_id": "jazz-cfa1f",
+    "storage_bucket": "jazz-cfa1f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:87278271272:android:7aebead507f9b2093e2e1d",
+        "android_client_info": {
+          "package_name": "com.example.jazz"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "87278271272-arffllao13b80bgccjg09k0trm5tp6lv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.jazz",
+            "certificate_hash": "df3ab43b538a6cc2ff9aa3163acb64b2f9ded995"
+          }
+        },
+        {
+          "client_id": "87278271272-t57ug94vdg3hu2faci8cqtdujjvhu0ff.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCiiQ1sHbgCUPYC9IawoQfaC2aYmMdJSaw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "87278271272-t57ug94vdg3hu2faci8cqtdujjvhu0ff.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "87278271272-m14pr3554dge6ig3idsgg9ekd79f5nqj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.jazz"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

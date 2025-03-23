@@ -1,6 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:jazz/core/dependency_injection.dart';
+import 'package:jazz/core/router.dart';
+import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc.dart';
 import 'package:jazz/features/download_feature/data/datasources/download_datasource.dart';
 import 'package:jazz/features/download_feature/data/datasources/downloadedSongsMetadataDatasource.dart';
 import 'package:jazz/features/download_feature/data/repositories_impl/download_repository_impl.dart';
@@ -13,11 +19,13 @@ import 'package:jazz/features/download_feature/presentation/bloc/DownloadedOrNot
 import 'package:jazz/features/download_feature/presentation/bloc/download/download_bloc.dart';
 import 'package:jazz/features/download_feature/presentation/bloc/downloadedSongsBloc/downloaded_songs_bloc.dart';
 import 'package:jazz/features/lyrics_feature/presentation/bloc/lyrics_bloc/lyrics_bloc.dart';
+import 'package:jazz/features/playlist_feature/presentation/bloc/playlist_bloc/playlist_bloc.dart';
 import 'package:jazz/features/search_feature/data/data_sources/youtube_data_source.dart';
 import 'package:jazz/features/search_feature/data/repositories_impl/song_repository_impl.dart';
 import 'package:jazz/features/search_feature/domain/usecases/search.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/albumBloc/album_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/albumBloc/track_thumbnail_bloc/track_thumbnail_bloc.dart';
+import 'package:jazz/features/search_feature/presentation/bloc/artist_bloc/artist_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/currentSongWidgetBloc/current_song_widget_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/search/search_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/song/song_bloc.dart';
@@ -30,26 +38,47 @@ import 'package:jazz/features/stream_feature/domain/repositories/streamRepositor
 import 'package:jazz/features/stream_feature/domain/usecases/getMp3StreamUsecase.dart';
 import 'package:jazz/features/stream_feature/domain/usecases/getRelatedSongUsecase.dart';
 import 'package:jazz/features/stream_feature/presentation/bloc/playerBloc/player_bloc.dart';
+import 'package:jazz/firebase_options.dart';
 
 import 'package:metadata_god/metadata_god.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 
 
 
 void main()async {
-  setup();
+
+
+
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await Supabase.initialize(
+    url: 'https://rzxhrjumfyhngxgqekpz.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6eGhyanVtZnlobmd4Z3Fla3B6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0OTk4MzgsImV4cCI6MjA1NzA3NTgzOH0.NymQ8TfKAYsDVr2ad5fPPfgKS9HjURGFdZDrUTjIXPs',
+  );
+  FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+ GoogleSignIn googleSignIn = GoogleSignIn();
+ FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  setup(
+      firebaseAuth: firebaseAuth,
+      googleSignIn: googleSignIn,
+      firebaseFirestore: firebaseFirestore
+  );
+  final AppRouter appRouter = AppRouter();
   await MetadataGod.initialize();
 
 
 
 
 
-  runApp(const MyApp());
+  runApp( MyApp(appRouter: appRouter,));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final AppRouter appRouter;
+  const MyApp({super.key, required this.appRouter});
 
 
 
@@ -78,11 +107,14 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<AlbumBloc>(create: (context)=> di<AlbumBloc>()),
         BlocProvider<PlayerBloc>(create: (context)=> di<PlayerBloc>()),
-        BlocProvider<SearchBloc>(create: (context)=> di<SearchBloc>())
+        BlocProvider<SearchBloc>(create: (context)=> di<SearchBloc>()),
+        BlocProvider<ArtistBloc>(create: (context)=> di<ArtistBloc>()),
+        BlocProvider<PlaylistBloc>(create: (context)=> di<PlaylistBloc>()),
+        BlocProvider<AuthBloc>(create: (context)=> di<AuthBloc>()..add(CheckAuthUserStatus()))
       ],
       child: MaterialApp(
         title: 'Music App',
-        home: SearchScreen(),
+        onGenerateRoute: appRouter.onGenerateRoute,
       ),
     );
   }

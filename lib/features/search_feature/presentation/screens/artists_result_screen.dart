@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jazz/features/search_feature/domain/entities/artist.dart';
+import 'package:jazz/features/search_feature/presentation/bloc/artist_bloc/artist_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/search/search_bloc.dart';
+import 'package:jazz/features/search_feature/presentation/screens/artist_detail_screen.dart';
  // Adjust the import path
 
 class ArtistsResultScreen extends StatelessWidget {
@@ -37,7 +39,10 @@ class ArtistsResultScreen extends StatelessWidget {
                   title: Text(artist.name),
                   subtitle: Text(artist.category),
                   onTap: () {
-                    // Optionally handle tap, e.g. navigate to an artist details page.
+                    context.read<ArtistBloc>().add(FetchArtistEvent(artistId: artist.browseId));
+                    Navigator.push(context, MaterialPageRoute(builder: (context){
+                      return ArtistDetailScreen();
+                    }));
                   },
                 );
               },

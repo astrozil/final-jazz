@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jazz/core/dependency_injection.dart';
+import 'package:jazz/core/routes.dart';
+import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc.dart';
 import 'package:jazz/features/download_feature/data/datasources/download_datasource.dart';
 import 'package:jazz/features/download_feature/domain/entities/download_request.dart';
 import 'package:jazz/features/download_feature/presentation/bloc/DownloadedOrNotBloc/downloaded_or_not_bloc.dart';
@@ -10,14 +12,20 @@ import 'package:jazz/features/download_feature/presentation/bloc/download/downlo
 import 'package:jazz/features/download_feature/presentation/bloc/downloadedSongsBloc/downloaded_songs_bloc.dart';
 import 'package:jazz/features/download_feature/presentation/screens/download_screen.dart';
 import 'package:jazz/features/download_feature/presentation/screens/downloaded_songs_screen.dart';
+import 'package:jazz/features/playlist_feature/presentation/bloc/playlist_bloc/playlist_bloc.dart';
+import 'package:jazz/features/playlist_feature/presentation/screens/billboard_songs_playlist_screen.dart';
+import 'package:jazz/features/playlist_feature/presentation/screens/suggested_songs_of_favourite_artists_playlist_screen.dart';
+import 'package:jazz/features/playlist_feature/presentation/screens/trending_songs_playlist_screen.dart';
 import 'package:jazz/features/search_feature/domain/entities/song.dart';
 import 'package:jazz/features/search_feature/domain/usecases/search.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/albumBloc/album_bloc.dart';
+import 'package:jazz/features/search_feature/presentation/bloc/artist_bloc/artist_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/currentSongWidgetBloc/current_song_widget_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/search/search_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/song/song_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/screens/album_Screen.dart';
 import 'package:jazz/features/search_feature/presentation/screens/albums_result_screen.dart';
+import 'package:jazz/features/search_feature/presentation/screens/artist_detail_screen.dart';
 import 'package:jazz/features/search_feature/presentation/screens/artists_result_screen.dart';
 import 'package:jazz/features/search_feature/presentation/screens/collapsed_current_song.dart';
 import 'package:jazz/features/search_feature/presentation/screens/expanded_current_song.dart';
@@ -35,7 +43,6 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen>{
   final TextEditingController _controller = TextEditingController();
   final DraggableScrollableController _scrollableController = DraggableScrollableController();
-  
 
 
 
@@ -107,18 +114,27 @@ class _SearchScreenState extends State<SearchScreen>{
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: TextField(
-                      controller: _controller,
-                      decoration: InputDecoration(
-                        hintText: 'Search YouTube',
-                        suffixIcon: IconButton(
-                          icon: Icon(Icons.search),
-                          onPressed: () {
-                            context.read<SongBloc>().add(
-                                SearchForSongs(_controller.text));
-                          },
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            decoration: InputDecoration(
+                              hintText: 'Search YouTube',
+                              suffixIcon: IconButton(
+                                icon: Icon(Icons.search),
+                                onPressed: () {
+                                  context.read<SongBloc>().add(
+                                      SearchForSongs(_controller.text));
+                                },
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        ElevatedButton(onPressed: (){
+                Navigator.pushNamed(context, Routes.profileScreen);
+                        }, child: Icon(Icons.person))
+                      ],
                     ),
                   ),
                   Expanded(
@@ -129,7 +145,7 @@ class _SearchScreenState extends State<SearchScreen>{
                         } else if (state is SongLoaded) {
 
                           List<Song> songs = state.songs.where((s)=> s.category == "Songs").toList();
-                          dynamic topResult = state.songs.where((s)=> s.category == "Top result").first;
+                          dynamic topResult =   state.songs.where((s)=> s.category == "Top result").toList().isNotEmpty ?state.songs.where((s)=> s.category == "Top result").first: null ;
                           List videos = state.songs.where((s)=> s.category == "Videos").toList();
                           List albums = state.songs.where((s)=> s.category == "Albums").toList();
                           List artists = state.songs.where((s)=> s.category == "Artists").toList();
@@ -137,12 +153,40 @@ class _SearchScreenState extends State<SearchScreen>{
                           List community_playlists = state.songs.where((s)=> s.category == "Community Playlists").toList();
                         return ListView(
                           children: [
-                            Text("Top Result"),
-                            ListTile(
-                              leading: Image.network(topResult.thumbnails.defaultThumbnail.url),
-                              title: topResult.resultType != "artist" ?  Text(topResult.title): Text(topResult.artist),
-                              subtitle:topResult.resultType != "artist" ? Text("${topResult.resultType == 'video' ? "song" : topResult.resultType} . ${topResult.artist}") : Text(topResult.resultType),
-                            ),
+                           if(topResult != null)
+                             Column(
+                               children: [
+                                 Text("Top Result"),
+                                 ListTile(
+                                   leading: Image.network(topResult.thumbnails.defaultThumbnail.url),
+                                   title: topResult.resultType != "artist" ?  Text(topResult.title): Text(topResult.artists.first['name']),
+                                   subtitle:topResult.resultType != "artist" ?
+                                   Text("${topResult.resultType == 'video' ? "song" : topResult.resultType} . ${topResult.artists.first['name']}")
+                                       : Text(topResult.resultType),
+                                   onTap: (){
+                                     if(topResult.resultType == "song" || topResult.resultType == "video"){
+                                       final isFromAlbum = context.read<PlayerBloc>().state.isFromAlbum;
+                                       if(isFromAlbum){
+                                         context.read<PlayerBloc>().add(UpdateStateEvent(state: context.read<PlayerBloc>().state.copyWith(isFromAlbum: false)));
+                                       }
+                                       context.read<PlayerBloc>().add(PlaySongEvent(song: dartz.left(topResult)));
+                                     }else if(topResult.resultType == "album"){
+                                       context.read<AlbumBloc>().add(SearchAlbum(albumId: topResult.browseId));
+                                       Navigator.push(context, MaterialPageRoute(builder: (context){
+                                         return AlbumScreen();
+                                       }));
+                                     }else if(topResult.resultType == "artist"){
+                                       context.read<ArtistBloc>().add(FetchArtistEvent(artistId: topResult.browseId));
+                                       Navigator.push(context, MaterialPageRoute(builder: (context){
+                                         return ArtistDetailScreen();
+                                       }));
+                                     }
+                                   },
+                                 ),
+                               ],
+                             ),
+
+
 
                             Row(
                               children: [
@@ -176,10 +220,12 @@ class _SearchScreenState extends State<SearchScreen>{
                                     child: ListTile(
                                         leading: ClipRRect(child: Image(image: NetworkImage(song.thumbnails.defaultThumbnail.url)),borderRadius: BorderRadius.circular(5),),
                                         title: Text(song.title),
-                                        subtitle: Text(song.artist),
+                                        subtitle: Text( song.artists
+                                            .map((artist) => artist['name'] as String)
+                                            .join(', '),),
                                         trailing:
                                         ElevatedButton(onPressed: (){
-                                          context.read<DownloadedOrNotBloc>().add(CheckIfDownloadedEvent(song.id,song.title,song.artist));
+                                          context.read<DownloadedOrNotBloc>().add(CheckIfDownloadedEvent(song.id,song.title,song.artists.first['name']));
                                           showModalBottomSheet(
                                             context: context,
                                             shape: const RoundedRectangleBorder(
@@ -204,11 +250,11 @@ class _SearchScreenState extends State<SearchScreen>{
                                                         return ElevatedButton(
                                                           onPressed: () {
                                                             if(state is DownloadedSongState){
-                                                              context.read<DownloadedOrNotBloc>().add(DeleteDownloadedSongEvent(song.id, song.title,song.artist));
+                                                              context.read<DownloadedOrNotBloc>().add(DeleteDownloadedSongEvent(song.id, song.title,song.artists.first['name']));
                                                               Navigator.pop(context);
                                                             }else if(state is NotDownloadedSongState){
                                                               context.read<DownloadBloc>().add(
-                                                                  DownloadSongEvent(DownloadRequest(videoID:song.id,title: song.title,artist: song.artist,thumbnail:song.thumbnails.defaultThumbnail.url,videoUrl: song.url)));
+                                                                  DownloadSongEvent(DownloadRequest(videoID:song.id,title: song.title,artist: song.artists.first['name'],thumbnail:song.thumbnails.defaultThumbnail.url,videoUrl: song.url)));
                                                             }
                                                           },
                                                           child: state is DownloadedSongState? const Text('Remove from download'): const Text("Download"),
@@ -280,7 +326,13 @@ class _SearchScreenState extends State<SearchScreen>{
                                 itemBuilder: (context,index){
                                   return ListTile(
                                     leading: Image.network(artists[index].thumbnails.defaultThumbnail.url),
-                                    title: Text(artists[index].artist),
+                                    title: Text(artists[index].artists.first['name']),
+                                    onTap: (){
+                                      context.read<ArtistBloc>().add(FetchArtistEvent(artistId: artists[index].browseId));
+                                      Navigator.push(context, MaterialPageRoute(builder: (context){
+                                        return ArtistDetailScreen();
+                                      }));
+                                    },
                                   );
                                 }),
                           ],
@@ -289,10 +341,39 @@ class _SearchScreenState extends State<SearchScreen>{
                         } else if (state is SongError) {
                           return Center(child: Text(state.message));
                         }
-                        return Center(child: Text('Search for songs!'));
+                        return Center(child: Column(
+                          children: [
+                            ElevatedButton(onPressed: (){
+                            context.read<PlaylistBloc>().add(FetchTrendingSongsPlaylistEvent());
+                            Navigator.push(context, MaterialPageRoute(builder: (context)=> const TrendingSongsPlaylistScreen()));
+                            }, child:Text("Trending Songs Playlist") ),
+                            ElevatedButton(onPressed: (){
+                              context.read<PlaylistBloc>().add(FetchBillboardSongsPlaylistEvent());
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=> const BillboardSongsPlaylistScreen()));
+                            }, child:Text("Billboard Songs Playlist") ),
+                            ElevatedButton(onPressed: () {
+                              context.read<PlaylistBloc>().add(FetchFavouriteSongsPlaylistEvent());
+                              Navigator.pushNamed(context, Routes.favouriteSongsPlaylistScreen);
+                            }
+                                , child: Text("Favourite Songs")),
+                            BlocListener<AuthBloc, AuthState>(
+  listener: (context, state) {
+   if(state is UserDataFetched){
+     final artistIds = state.user.favouriteArtists.join(",");
+     context.read<PlaylistBloc>().add(FetchSuggestedSongsOfFavouriteArtists(artistIds:artistIds ));
+   }
+  },
+  child: ElevatedButton(onPressed: (){
+                             context.read<AuthBloc>().add(FetchUserDataEvent());
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=> const SuggestedSongsOfFavouriteArtistsPlaylistScreen()));
+                            }, child:Text("Suggested Songs Playlist") ),
+)
+                          ],
+                        ));
                       },
                     ),
                   ),
+
                 ],
               ),
             ),

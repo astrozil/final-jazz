@@ -25,7 +25,7 @@ class Album {
     required this.tracks,
     required this.year,
     required this.type,
-    required this.browseId
+    required this.browseId,
   });
 
   Album copyWith({
@@ -39,7 +39,7 @@ class Album {
     List<RelatedSong>? tracks,
     String? year,
     String? type,
-    String? browseId
+    String? browseId,
   }) {
     return Album(
       artist: artist ?? this.artist,
@@ -52,7 +52,43 @@ class Album {
       tracks: tracks ?? this.tracks,
       year: year ?? this.year,
       type: type ?? this.type,
-      browseId: browseId ??this.browseId
+      browseId: browseId ?? this.browseId,
     );
+  }
+
+  factory Album.fromJson(Map<String, dynamic> json) {
+    return Album(
+      artist: json['artist'] as String? ?? "",
+      artistId: json['artistId'] as String? ?? "",
+      description: json['description'] as String? ?? "",
+      duration: json['duration'] as String? ?? "",
+      ytThumbnail: YtThumbnail.fromJson(
+        json['thumbnails'][0] as Map<String,dynamic>? ?? {},
+      ),
+      title: json['title'] as String? ?? "",
+      trackCount: json['trackCount'] as int? ?? 0,
+      tracks: (json['tracks'] as List<dynamic>? ?? [])
+          .map((e) => RelatedSong.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      year: json['year'] as String? ?? "",
+      type: json['type'] as String? ?? "",
+      browseId: json['browseId'] as String? ?? "",
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'artist': artist,
+      'artistId': artistId,
+      'description': description,
+      'duration': duration,
+      'thumbnail': ytThumbnail.toJson(),
+      'title': title,
+      'trackCount': trackCount,
+      'tracks': tracks.map((e) => e.toJson()).toList(),
+      'year': year,
+      'type': type,
+      'browseId': browseId,
+    };
   }
 }

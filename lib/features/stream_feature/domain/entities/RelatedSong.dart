@@ -7,12 +7,25 @@ class RelatedSong extends Equatable {
 
   const RelatedSong({required this.url, required this.song});
 
-  // Method to create a new instance with an updated url
   RelatedSong copyWith({String? url}) {
     return RelatedSong(
       url: url ?? this.url,
       song: song,
     );
+  }
+
+  factory RelatedSong.fromJson(Map<String, dynamic> json) {
+    return RelatedSong(
+      url: "",
+      song: Song.fromJson(json),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'url': url,
+      'song': song.toJson(),
+    };
   }
 
   @override

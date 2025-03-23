@@ -79,11 +79,17 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
    emit(state.copyWith(isShuffleEnabled: false,isPlaylistRepeatEnabled: false,isSongRepeatEnabled: false,isLoading: true));
     _cancelSubscriptions();
     if(event.albumTracks != null){
+
       emit(state.copyWith(isFromAlbum: true,));
       emit(state.copyWith(relatedSongs: SongHistory(history: left(event.albumTracks!))));
+
     }
   await event.song.fold(
       (song)async{
+        if(event.albumTracks != null){
+          final tempIndex = event.albumTracks!.indexWhere((tempSong)=> tempSong.song.id == song.id);
+          emit(state.copyWith(currentSongIndex: tempIndex));
+        }
         add(UpdateStateEvent(state: state.copyWith(currentSong: left(song))));
 
             if(!state.isFromAlbum){
@@ -103,6 +109,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       (downloadedSong)async{
 
     add(UpdateStateEvent(state: state.copyWith(relatedSongs: SongHistory.empty(isStreamed: false))));
+
     await playSong(right(downloadedSong), emit, "");
       }
   );
@@ -301,6 +308,7 @@ print("HEYYY");
   Future<void> _handleStreamedSong(Song song, String url, Emitter<Player> emit) async {
     add(UpdateStateEvent(state: (state).copyWith(currentSong: left(song))));
     if (url.isEmpty) {
+      print("OKKK");
       try {
         final songUrl = await getMp3StreamUseCase(song.id, song.url);
         await songUrl.fold(
@@ -308,13 +316,16 @@ print("HEYYY");
             // emit(PlayerErrorState(errorMessage: failure.message));
           },
               (result) async {
+                print("YEESS");
             if (result != null) {
+              print(result.url);
               final songHistory =
               state.relatedSongs.mapRelatedSongs((list) {
                 list[state.currentSongIndex] = list[state.currentSongIndex].copyWith(url: result.url);
                 return list;
               });
               add(UpdateStateEvent(state: state.copyWith(relatedSongs: songHistory)));
+              print(result.url);
               await audioPlayer.setUrl(result.url);
             }
           },
@@ -390,7 +401,7 @@ print("HEYYY");
     Either<Failure,String> lyricsResult;
     if (song.isLeft()) {
       final songData = song.fold((s) => s, (_) => null)!;
-      lyricsResult = await getLyrics(songData.artist, songData.title);
+      lyricsResult = await getLyrics(songData.artists.first['name'], songData.title);
     } else {
       final downloadedSong = song.fold((_) => null, (ds) => ds)!;
       lyricsResult = await getLyrics(downloadedSong.artist, downloadedSong.songName);

@@ -128,7 +128,9 @@ class AlbumScreen extends StatelessWidget {
                 ? Image.network(thumbnail.url, height: 50, width: 50, fit: BoxFit.cover)
                 : const SizedBox(height: 50, width: 50, child: Icon(Icons.music_note)),
             title: Text(track.song.title),
-            subtitle: Text(track.song.artist),
+            subtitle:Text( track.song.artists
+                .map((artist) => artist['name'] as String)
+                .join(', '),),
           ),
         );
       },
