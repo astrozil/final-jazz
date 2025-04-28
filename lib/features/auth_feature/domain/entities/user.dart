@@ -15,6 +15,7 @@ class AppUser extends Equatable {
   final List<String> songHistory;
   final List<String> playlists;
   final List<String> searchHistory;
+  final String? fcmToken;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -30,6 +31,7 @@ class AppUser extends Equatable {
     this.songHistory = const [],
     this.playlists = const [],
     this.searchHistory = const [],
+     this.fcmToken,
     required this.createdAt,
     required this.updatedAt,
 
@@ -49,8 +51,10 @@ class AppUser extends Equatable {
     List<String>? songHistory,
     List<String>? playlists,
     List<String>? searchHistory,
+   String? fcmToken,
     DateTime? createdAt,
     DateTime? updatedAt,
+
   }) {
     return AppUser(
       id: id ?? this.id,
@@ -63,6 +67,7 @@ class AppUser extends Equatable {
       songHistory: songHistory ?? this.songHistory,
       playlists: playlists ?? this.playlists,
       searchHistory: searchHistory ?? this.searchHistory,
+      fcmToken: fcmToken?? this.fcmToken,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
     );
@@ -77,6 +82,7 @@ class AppUser extends Equatable {
     favouriteSongs,
     songHistory,
     playlists,
+    fcmToken,
     searchHistory,
     createdAt,
     updatedAt,

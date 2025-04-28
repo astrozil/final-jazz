@@ -8,8 +8,8 @@ class LyricsRepoImpl extends LyricsRepository{
 
   LyricsRepoImpl ({required this.lyricsDataSource});
   @override
-  Future<Either<Failure, String>> getLyrics(String artist,String songName)async {
-    return await lyricsDataSource.getLyrics(artist, songName);
+  Future<List<Map<String, dynamic>>?> getLyrics(String artist,String songName)async {
+    return await lyricsDataSource.getSyncedLyrics(trackName: songName,artistName: artist);
   }
 
 }

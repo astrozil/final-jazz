@@ -3,9 +3,12 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:bloc/bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:jazz/core/failure/failure.dart';
+import 'package:jazz/features/auth_feature/domain/entities/user.dart';
 import 'package:jazz/features/download_feature/domain/entities/downloadedSong.dart';
 import 'package:jazz/features/lyrics_feature/domain/usecases/get_lyrics_usecase.dart';
 import 'package:jazz/features/search_feature/domain/entities/song.dart';
@@ -52,7 +55,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     isLoading: false,
     errorMessage: null,
     relatedSongs: SongHistory.empty(),
-    lyrics: "",
+    lyrics: [],
     currentSongIndex: 0,
         isFromAlbum: false
   )) {
@@ -307,6 +310,8 @@ print("HEYYY");
 
   Future<void> _handleStreamedSong(Song song, String url, Emitter<Player> emit) async {
     add(UpdateStateEvent(state: (state).copyWith(currentSong: left(song))));
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+
     if (url.isEmpty) {
       print("OKKK");
       try {
@@ -330,6 +335,29 @@ print("HEYYY");
             }
           },
         );
+
+          await FirebaseFirestore.instance.runTransaction((transaction) async {
+            DocumentSnapshot doc = await transaction.get(
+                FirebaseFirestore.instance.collection("Users").doc(userId));
+
+            List<dynamic> songHistory = doc.exists && doc.data() != null && (doc.data() as Map).containsKey("songHistory")
+                ? List.from(doc.get("songHistory"))
+                : [];
+
+            // Check if we already have 50 items before adding
+            if (songHistory.length >= 50) {
+              songHistory.removeAt(0);  // Remove the first/oldest item
+            }
+
+            // Add the new song ID
+            songHistory.add(song.id);
+
+            transaction.update(
+                FirebaseFirestore.instance.collection("Users").doc(userId),
+                {"songHistory": songHistory});
+          });
+
+
       } catch (e) {
         add(UpdateStateEvent(state: state.copyWith(errorMessage: e.toString())));
       }
@@ -398,18 +426,20 @@ print("HEYYY");
 
   void _searchLyrics(Either<Song,DownloadedSong> song,Emitter<Player> emit)async{
 
-    Either<Failure,String> lyricsResult;
+    List<Map<String,dynamic>>? lyricsResult;
     if (song.isLeft()) {
       final songData = song.fold((s) => s, (_) => null)!;
-      lyricsResult = await getLyrics(songData.artists.first['name'], songData.title);
+      lyricsResult = await getLyrics(songData.artists.map((artist)=> artist['name']).join(","), songData.title);
     } else {
       final downloadedSong = song.fold((_) => null, (ds) => ds)!;
       lyricsResult = await getLyrics(downloadedSong.artist, downloadedSong.songName);
     }
-   lyricsResult.fold(
-           (failure)=> add(UpdateStateEvent(state: state.copyWith(lyrics: "No Lyrics Available"))),    //add(UpdateStateEvent(state: PlayerErrorState(errorMessage: "Lyrics not available"))),
-           (result)=> add(UpdateStateEvent(state: (state).copyWith(lyrics: result)))
-   );
+    if(lyricsResult != null && lyricsResult.isNotEmpty){
+      add(UpdateStateEvent(state: (state).copyWith(lyrics: lyricsResult)));
+    }else{
+      add(UpdateStateEvent(state: state.copyWith(lyrics: [])));
+    }
+
   }
   Future<void> _resetVariables(Emitter<Player> emit)async{
     emit(state.copyWith(currentSong: null,currentSongIndex: 0,relatedSongs: SongHistory.empty()));

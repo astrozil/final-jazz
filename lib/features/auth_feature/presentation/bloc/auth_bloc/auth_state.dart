@@ -17,6 +17,15 @@ class AuthFailure extends AuthState {
 
 
 }
+
+class ResetPasswordSuccess extends AuthState{
+
+}
+class ResetPasswordFail extends AuthState{
+final String message;
+
+  ResetPasswordFail({required this.message});
+}
 class IsLoggedIn extends AuthState{
   final bool isLoggedIn;
 
@@ -34,4 +43,12 @@ final class PasswordChanged extends AuthState{
 class UserDataFetched extends AuthState {
   final AppUser user;
   UserDataFetched({required this.user});
+}
+class FriendsLoaded extends AuthState{
+  final List<AppUser> friends;
+
+  FriendsLoaded({required this.friends});
+}
+class EmailUpdated extends AuthState{
+
 }

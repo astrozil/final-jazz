@@ -40,8 +40,8 @@ class YtThumbnails {
   factory YtThumbnails.fromJson(List json) {
     return YtThumbnails(
       defaultThumbnail: YtThumbnail.fromJson(json[0] as Map? ?? {}),
-      mediumThumbnail: YtThumbnail.fromJson(json[0] as Map? ?? {}),
-      highThumbnail: YtThumbnail.fromJson(json[0] as Map? ?? {}),
+      mediumThumbnail: YtThumbnail.fromJson(json.length > 1 ? json[1] : json[0]),
+      highThumbnail: YtThumbnail.fromJson(json.length >2? json[2] : json.length >1 ? json[1] : json[0]),
     );
   }
 

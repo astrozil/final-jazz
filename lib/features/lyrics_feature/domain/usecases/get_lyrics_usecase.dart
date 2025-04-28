@@ -6,7 +6,7 @@ class GetLyrics{
   final LyricsRepository lyricsRepository;
   GetLyrics(this.lyricsRepository);
 
-  Future<Either<Failure,String>> call(String artist, String songName)async{
+  Future<List<Map<String,dynamic>>?> call(String artist, String songName)async{
 
        return await lyricsRepository.getLyrics(artist,songName);
 

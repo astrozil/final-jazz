@@ -24,14 +24,20 @@ final class FetchFavouriteSongsPlaylistEvent extends PlaylistEvent{
 final class PlaylistLoadMoreEvent extends PlaylistEvent{
 
 }
+final class FetchSongsFromSongIdList extends PlaylistEvent{
+  final List songIdList;
 
+  FetchSongsFromSongIdList({required this.songIdList});
+}
 final class AddFavouriteSong extends PlaylistEvent{
   final String songId;
 
   AddFavouriteSong({required this.songId});
 
 }
+final class FetchRecommendedSongsPlaylist extends PlaylistEvent{
 
+}
 final class RemoveFavouriteSong extends PlaylistEvent{
   final String songId;
 
@@ -50,7 +56,11 @@ class DeletePlaylist extends PlaylistEvent {
 }
 
 class FetchPlaylists extends PlaylistEvent {}
+class FetchPlaylist extends PlaylistEvent{
+  final String playlistId;
 
+  FetchPlaylist({required this.playlistId});
+}
 class ChangePlaylistTitle extends PlaylistEvent {
   final String title;
   final String playlistId;

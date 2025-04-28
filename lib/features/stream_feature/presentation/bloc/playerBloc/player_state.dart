@@ -16,7 +16,7 @@ final class PlayerState extends Player{
   final SongHistory relatedSongs;
   final int currentSongIndex;
   final bool isLoading;
-  final String lyrics;
+  final List<Map<String,dynamic>>? lyrics;
   final String? errorMessage;
   final bool isFromAlbum;
 
@@ -32,7 +32,7 @@ final class PlayerState extends Player{
     SongHistory? relatedSongs,
     int? currentSongIndex,
     bool? isLoading,
-    String? lyrics,
+    List<Map<String,dynamic>>? lyrics,
     String? errorMessage,
     bool? isFromAlbum
 

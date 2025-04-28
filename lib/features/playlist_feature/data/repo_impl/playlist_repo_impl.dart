@@ -1,5 +1,6 @@
 import 'package:jazz/features/playlist_feature/data/data_source/billboard_data_source.dart';
 import 'package:jazz/features/playlist_feature/data/data_source/favourite_playlist_data_source.dart';
+import 'package:jazz/features/playlist_feature/data/data_source/recommendation_songs_playlist_data_source.dart';
 import 'package:jazz/features/playlist_feature/data/data_source/suggested_songs_of_favourite_artists.dart';
 import 'package:jazz/features/playlist_feature/data/data_source/trending_data_source.dart';
 import 'package:jazz/features/playlist_feature/data/data_source/user_playlist_data_source.dart';
@@ -14,18 +15,21 @@ class PlaylistRepoImpl extends PlaylistRepo{
   final SuggestedSongsOfFavouriteArtistsDataSource _suggestedSongsOfFavouriteArtistsDataSource;
   final FavouritePlaylistDataSource _favouritePlaylistDataSource;
   final UserPlaylistDataSource _userPlaylistDataSource;
+  final RecommendationSongsPlaylistDataSource _recommendationSongsPlaylistDataSource;
 
   PlaylistRepoImpl({
    required TrendingDataSource trendingDataSource,
     required BillboardDataSource billboardDataSource,
     required SuggestedSongsOfFavouriteArtistsDataSource suggestedSongsOfFavouriteArtistsDataSource,
     required FavouritePlaylistDataSource favouritePlaylistDataSource,
-    required UserPlaylistDataSource userPlaylistDataSource
+    required UserPlaylistDataSource userPlaylistDataSource,
+    required RecommendationSongsPlaylistDataSource recommendationSongsPlaylistDataSource
 }): _trendingDataSource = trendingDataSource,
   _billboardDataSource = billboardDataSource,
   _suggestedSongsOfFavouriteArtistsDataSource = suggestedSongsOfFavouriteArtistsDataSource,
   _favouritePlaylistDataSource = favouritePlaylistDataSource,
-  _userPlaylistDataSource = userPlaylistDataSource;
+  _userPlaylistDataSource = userPlaylistDataSource,
+  _recommendationSongsPlaylistDataSource = recommendationSongsPlaylistDataSource;
   @override
   Future<List<RelatedSong>> fetchTrendingSongsPlaylist() {
     return _trendingDataSource.fetchTrendingSongs();
@@ -52,8 +56,8 @@ return _billboardDataSource.fetchBillboardSongs();
   }
 
   @override
-  Future<List<RelatedSong>> fetchFavouriteSongsPlaylist(List<String> songIds)async {
-  return _favouritePlaylistDataSource.fetchBillboardSongs(songIds);
+  Future<List<RelatedSong>> fetchFavouriteSongsPlaylist(List songIds)async {
+  return _favouritePlaylistDataSource.fetchFavouriteSongs(songIds);
   }
 
   @override
@@ -84,6 +88,16 @@ return _billboardDataSource.fetchBillboardSongs();
   @override
   Future<void> removeSongFromPlaylist(String songId, String playlistId) async{
     await _userPlaylistDataSource.removeSongFromPlaylist(songId, playlistId);
+  }
+
+  @override
+  Future<Map?> fetchPlaylist(String playlistId) {
+   return _userPlaylistDataSource.fetchPlaylist(playlistId);
+  }
+
+  @override
+  Future<List<RelatedSong>> fetchRecommendedSongsPlaylist() {
+    return _recommendationSongsPlaylistDataSource.fetchRecommendedSongs();
   }
 
 }

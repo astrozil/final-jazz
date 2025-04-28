@@ -139,4 +139,25 @@ class YouTubeDataSource {
     return null;
   }
 
+  Future<List> getSuggestions(String query) async {
+    if (query.isEmpty) {
+      return [];
+    }
+
+    final response = await dio.get(
+      'https://ytmusic-4diq.onrender.com/search_suggestions',
+      queryParameters: {
+        'query': query
+      }
+
+    );
+
+    if (response.statusCode == 200 && response.data != null) {
+      final List suggestionList = response.data;
+      return suggestionList;
+    } else {
+      throw Exception('Failed to load suggestions');
+    }
+  }
+
 }

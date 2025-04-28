@@ -32,6 +32,7 @@ AppUser _$AppUserFromJson(Map<String, dynamic> json) => AppUser(
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      fcmToken: json['fcmToken'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
@@ -47,6 +48,7 @@ Map<String, dynamic> _$AppUserToJson(AppUser instance) => <String, dynamic>{
       'songHistory': instance.songHistory,
       'playlists': instance.playlists,
       'searchHistory': instance.searchHistory,
+      'fcmToken': instance.fcmToken,
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt.toIso8601String(),
     };

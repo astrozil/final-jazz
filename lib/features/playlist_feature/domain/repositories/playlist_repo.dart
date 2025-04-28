@@ -6,10 +6,12 @@ abstract class PlaylistRepo {
   Future<List<RelatedSong>> fetchTrendingSongsPlaylist();
   Future<List<BillboardSong>> fetchBillboardSongsPlaylist();
   Future<List<RelatedSong>>  fetchSuggestedSongsOfFavouriteArtists(String artistIds);
-  Future<List<RelatedSong>> fetchFavouriteSongsPlaylist(List<String> songIds);
+  Future<List<RelatedSong>> fetchFavouriteSongsPlaylist(List songIds);
+  Future<List<RelatedSong>> fetchRecommendedSongsPlaylist();
   Future<void> createPlaylist(String title);
   Future<void> deletePlaylist(String playlistId);
   Future<List<Map>?> fetchPlaylists();
+  Future<Map?> fetchPlaylist(String playlistId);
   Future<void> changePlaylistTitle(String title, String playlistId);
   Future<void> addSongToPlaylist(String songId, String playlistId);
   Future<void> removeSongFromPlaylist(String songId, String playlistId);

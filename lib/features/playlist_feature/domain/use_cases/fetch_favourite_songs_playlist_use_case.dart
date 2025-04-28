@@ -9,7 +9,7 @@ class FetchFavouriteSongsPlaylistUseCase {
     required PlaylistRepo playlistRepo
   }): _playlistRepo = playlistRepo;
 
-  Future<List<RelatedSong>> call(List<String> songIds){
+  Future<List<RelatedSong>> call(List songIds){
     return _playlistRepo.fetchFavouriteSongsPlaylist(songIds);
   }
 }

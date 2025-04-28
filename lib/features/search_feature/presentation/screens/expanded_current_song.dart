@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:jazz/core/routes.dart';
 import 'package:jazz/features/auth_feature/domain/entities/user.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc.dart';
 import 'package:jazz/features/lyrics_feature/presentation/bloc/lyrics_bloc/lyrics_bloc.dart';
@@ -10,16 +11,14 @@ import 'package:jazz/features/playlist_feature/presentation/bloc/playlist_bloc/p
 import 'package:jazz/features/search_feature/domain/entities/song.dart';
 import 'package:jazz/features/stream_feature/domain/entities/RelatedSong.dart';
 import 'package:jazz/features/stream_feature/domain/entities/repeat_mode.dart';
-
 import 'package:jazz/features/stream_feature/presentation/bloc/playerBloc/player_bloc.dart';
-
-
 import 'package:jazz/features/stream_feature/presentation/screens/relatedSongsScreen.dart';
 
-
 class ExpandedCurrentSong extends StatelessWidget {
-  const ExpandedCurrentSong({super.key});
-  void _showBottomSheet(BuildContext context,String songId) {
+  ExpandedCurrentSong({super.key});
+  final TextEditingController _controller = TextEditingController();
+
+  void _showBottomSheet(BuildContext context, String songId) {
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -33,26 +32,61 @@ class ExpandedCurrentSong extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-            BlocBuilder<AuthBloc, AuthState>(
-              builder: (context, state) {
-                if(state is UserDataFetched){
-                  AppUser user = state.user;
-                  if(user.favouriteSongs.contains(songId)){
-                    return ElevatedButton(onPressed: (){
-                      Navigator.pop(context);
-                      context.read<PlaylistBloc>().add(RemoveFavouriteSong(songId: songId));
-                    }, child: Text("Remove From Favorite Songs"));
-                  }else{
-                    return ElevatedButton(onPressed: (){
-                      Navigator.pop(context);
-                      context.read<PlaylistBloc>().add(AddFavouriteSong(songId: songId));
-
-                    }, child: Text("Add to Favourite Songs"));
-                }
-                }
-                return CircularProgressIndicator();
-              },
-            )
+              BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, state) {
+                  if (state is UserDataFetched) {
+                    AppUser user = state.user;
+                    if (user.favouriteSongs.contains(songId)) {
+                      return ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context.read<PlaylistBloc>().add(RemoveFavouriteSong(songId: songId));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          minimumSize: Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.favorite, size: 24),
+                            SizedBox(width: 8),
+                            Text("Remove From Favorite Songs", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      );
+                    } else {
+                      return ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context.read<PlaylistBloc>().add(AddFavouriteSong(songId: songId));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
+                          minimumSize: Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.favorite_border, size: 24),
+                            SizedBox(width: 8),
+                            Text("Add to Favorite Songs", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      );
+                    }
+                  }
+                  return Center(child: CircularProgressIndicator());
+                },
+              )
             ],
           ),
         );
@@ -63,399 +97,583 @@ class ExpandedCurrentSong extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<PlayerBloc, Player>(
-        builder: (context, state) {
-          if (state is PlayerState) {
-            if (state.currentSong != null) {
-              return Column(
-                  children: [
-                    state.currentSong!.fold((song) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Image.network(
-                              song.thumbnails.highThumbnail.url ?? ""),
-                          Text(song.title ?? ""),
+      builder: (context, state) {
+        if (state is PlayerState) {
+          if (state.currentSong != null) {
+            return Container(
+              height: MediaQuery.of(context).size.height,
 
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 30),
+              decoration: BoxDecoration(
+
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.deepPurple.shade900, Colors.black],
+                ),
+              ),
+              child: ListView(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                children: [
+                  // App Bar / Navigation
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                    const SizedBox(width: 50,),
+
+                      Text(
+                        "Now Playing",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.more_vert, color: Colors.white),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 30),
+
+                  // Album Art and Song Info
+                  state.currentSong!.fold(
+                        (song) {
+                      return Column(
+                        children: [
+                          Container(
+                            height: 250,
+                            width: 250,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  spreadRadius: 5,
+                                  blurRadius: 15,
+                                  offset: Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Image.network(
+                              song.thumbnails.highThumbnail.url ?? "",
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          SizedBox(height: 25),
+                          Text(
+                            song.title ?? "",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            song.artists.map((song)=> song['name'] ).join(",") ?? "Unknown Artist",
+                            style: TextStyle(
+                              color: Colors.grey[300],
+                              fontSize: 16,
+                            ),
+                          ),
                         ],
                       );
                     },
-                            (downloadedSong) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Image.memory(downloadedSong.image!),
-                              Text(downloadedSong.songName),
-                            ],
-                          );
-                        }
-                    ),
-                    Slider(
-                      min: 0,
-                      max: state.totalDuration
-                          .inMilliseconds.toDouble(),
-                      value: state.songPosition.inMilliseconds
-                          .toDouble(),
-                      onChanged: (value) {
-                        context.read<PlayerBloc>().seekTo(
-                            Duration(milliseconds: value.toInt()));
-                      },
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment
-                          .spaceBetween,
+                        (downloadedSong) {
+                      return Column(
+                        children: [
+                          Container(
+                            height: 250,
+                            width: 250,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  spreadRadius: 5,
+                                  blurRadius: 15,
+                                  offset: Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Image.memory(
+                              downloadedSong.image!,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          SizedBox(height: 25),
+                          Text(
+                            downloadedSong.songName,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            downloadedSong.artist,
+                            style: TextStyle(
+                              color: Colors.grey[300],
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+
+                  SizedBox(height: 30),
+
+                  // Playback Progress
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ListView(
+                      shrinkWrap: true,
                       children: [
-                        Text(_formatDuration(
-                            state.songPosition)),
-                        Text(_formatDuration(
-                            state.totalDuration)),
+                        SliderTheme(
+                          data: SliderThemeData(
+                            trackHeight: 5,
+                            thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
+                            overlayShape: RoundSliderOverlayShape(overlayRadius: 14),
+                            activeTrackColor: Colors.purple,
+                            inactiveTrackColor: Colors.grey.withOpacity(0.3),
+                            thumbColor: Colors.white,
+                            overlayColor: Colors.purple.withOpacity(0.3),
+                          ),
+                          child: Slider(
+                            min: 0,
+                            max: state.totalDuration.inMilliseconds.toDouble(),
+                            value: state.songPosition.inMilliseconds.toDouble(),
+                            onChanged: (value) {
+                              context.read<PlayerBloc>().seekTo(
+                                  Duration(milliseconds: value.toInt()));
+                            },
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                _formatDuration(state.songPosition),
+                                style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                              ),
+                              Text(
+                                _formatDuration(state.totalDuration),
+                                style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
-                    ElevatedButton(
-                      onPressed: () {
-                        context.read<PlayerBloc>().add(
-                            PausePlayerEvent());
-                      },
-                      child: Text("Pause"),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        context.read<PlayerBloc>().add(
-                            PlayNextSongEvent());
-                      },
-                      child: Text("Next"),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        context.read<PlayerBloc>().add(
-                            PlayPreviousEvent());
-                      },
-                      child: Text("Previous"),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                            context, MaterialPageRoute(builder: (context) {
-                          return RelatedSongScreen();
-                        }));
-                      },
-                      child: Text("Related Songs"),
-                    ),
-                    BlocBuilder<PlayerBloc, Player>(
-                      builder: (context, state) {
-                        if (state is PlayerState) {
-                          bool isShuffled = state.isShuffleEnabled;
-                          if (isShuffled) {
-                            return ElevatedButton(
-                              onPressed: () {
-                                context.read<PlayerBloc>().add(
-                                    ToggleShuffleEvent(
-                                        isShuffled: !isShuffled));
-                              },
-                              child: Text("Unshuffle"),
-                            );
-                          } else {
-                            return ElevatedButton(
-                              onPressed: () {
-                                context.read<PlayerBloc>().add(
-                                    ToggleShuffleEvent(
-                                        isShuffled: !isShuffled,index: state.currentSongIndex));
-                              },
-                              child: Text("Shuffle"),
-                            );
-                          }
-                        }
-                        return SizedBox();
-                      },
-                    ),
-                    BlocBuilder<
-                        PlayerBloc,
-                        Player>(
-                      builder: (context, state) {
-                        if (state is PlayerState) {
-                          if(!state.isPlaylistRepeatEnabled && !state.isSongRepeatEnabled){
-                            return ElevatedButton(
-                              onPressed: () {
-                                context.read<PlayerBloc>().add(
-                                    ToggleRepeatModeEvent(mode: RepeatMode.playlist));
-                              },
-                              child: Text("Repeat Playlist"),
-                            );
-                          }else if(state.isPlaylistRepeatEnabled){
-                            return ElevatedButton(
-                              onPressed: () {
-                                context.read<PlayerBloc>().add(
-                                    ToggleRepeatModeEvent(mode: RepeatMode.song));
-                              },
-                              child: Text("Repeat Current Song"),
-                            );
-                          }else if(state.isSongRepeatEnabled){
-                            return ElevatedButton(
-                              onPressed: () {
-                                context.read<PlayerBloc>().add(
-                                    ToggleRepeatModeEvent(mode: RepeatMode.none));
-                              },
-                              child: Text("Undo Repeat"),
-                            );
-                          }
+                  ),
 
-                        }
-                        return SizedBox();
+                  SizedBox(height: 25),
 
-                      },
-                    ),
-                    ElevatedButton(onPressed: () {
-                      Navigator.of(context).push(
-                          MaterialPageRoute(builder: (context) {
-                            return const LyricsScreen();
-                          }));
-                      // mp3StreamBlocState.song!.fold(
-                      //         (relatedSong){
-                      //
-                      //
-                      //       Navigator.of(context).push(MaterialPageRoute(builder: (context){
-                      //         return const LyricsScreen();
-                      //       }));
-                      //     },
-                      //         (downloadedSong){
-                      //       context.read<LyricsBloc>().add(GetLyricsEvent(artist: downloadedSong.artist, songName: downloadedSong.songName));
-                      //     }
-                      // );
-
-                    }, child: const Text("Lyrics")),
-                     state.currentSong!.fold(
-                         (song){
-                          return ElevatedButton(onPressed: ()
-                          {
-
-
-                            _showBottomSheet(context, song.id);
-                            context.read<AuthBloc>().add(FetchUserDataEvent());
-                          }, child: Text("Favourite Songs"));
-
-                         }
-                     , (downloadedSong){
-                           return SizedBox();
-                     }),
-
+                  // Playback Controls
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Shuffle Button
                       BlocBuilder<PlayerBloc, Player>(
                         builder: (context, state) {
-
-                          if(state is PlayerState){
-
-                            if(!state.isPlaying){
-                              return ElevatedButton(
-                                onPressed: () {
-                                  context.read<PlayerBloc>().add(
-                                      ResumePlayerEvent());
-                                },
-                                child: Text("Resume"),
-                              );
-                            }else{
-
-                            }
+                          if (state is PlayerState) {
+                            bool isShuffled = state.isShuffleEnabled;
+                            return IconButton(
+                              icon: Icon(
+                                Icons.shuffle,
+                                color: isShuffled ? Colors.purple : Colors.white,
+                                size: 25,
+                              ),
+                              onPressed: () {
+                                context.read<PlayerBloc>().add(
+                                    ToggleShuffleEvent(
+                                        isShuffled: !isShuffled,
+                                        index: state.currentSongIndex));
+                              },
+                            );
                           }
                           return SizedBox();
-                        }
+                        },
                       ),
 
+                      // Previous Button
+                      IconButton(
+                        icon: Icon(Icons.skip_previous, color: Colors.white, size: 35),
+                        onPressed: () {
+                          context.read<PlayerBloc>().add(PlayPreviousEvent());
+                        },
+                      ),
 
-                  ]
-              );
-              // return mp3StreamBlocState.song!.fold(
-              //         (song) {
-              //
-              //       return Column(
-              //         crossAxisAlignment: CrossAxisAlignment.center,
-              //         children: [
-              //           Image.network(song.thumbnails.highThumbnail.url ?? ""),
-              //           Text(song.title ?? ""),
-              //           BlocBuilder<SongPositionBloc, SongPositionState>(
-              //               builder: (context, songPositionState) {
-              //                 if (songPositionState is SongPositionUpdatedState) {
-              //
-              //                   return Column(
-              //                     children: [
-              //                       Slider(
-              //                         min: 0,
-              //                         max: songPositionState.totalDuration
-              //                             .inMilliseconds.toDouble(),
-              //                         value: songPositionState.position.inMilliseconds
-              //                             .toDouble(),
-              //                         onChanged: (value) {
-              //                           context.read<Mp3StreamBloc>().seekTo(
-              //                               Duration(milliseconds: value.toInt()));
-              //                         },
-              //                       ),
-              //
-              //
-              //                       Row(
-              //                         mainAxisAlignment: MainAxisAlignment
-              //                             .spaceBetween,
-              //                         children: [
-              //                           Text(_formatDuration(
-              //                               songPositionState.position)),
-              //                           Text(_formatDuration(
-              //                               songPositionState.totalDuration)),
-              //                         ],
-              //                       ),
-              //                     ],
-              //                   );
-              //                 }
-              //                 return Column(
-              //                   children: [
-              //                     Slider(
-              //                       min: 0,
-              //                       max: Duration.zero.inMilliseconds.toDouble(),
-              //                       value: Duration.zero.inMilliseconds.toDouble(),
-              //                       onChanged: (value) {
-              //                         context.read<Mp3StreamBloc>().seekTo(
-              //                             Duration(milliseconds: value.toInt()));
-              //                       },
-              //                     ),
-              //
-              //
-              //                     Row(
-              //                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //                       children: [
-              //                         Text(_formatDuration(Duration.zero)),
-              //                         Text(_formatDuration(Duration.zero)),
-              //                       ],
-              //                     ),
-              //                   ],
-              //                 );
-              //               }),
-              //           ElevatedButton(
-              //             onPressed: () {
-              //               context.read<Mp3StreamBloc>().add(
-              //                   PauseMp3Stream(left(song)));
-              //             },
-              //             child: Text("Pause"),
-              //           ),
-              //           ElevatedButton(
-              //             onPressed: () {
-              //               context.read<Mp3StreamBloc>().add(
-              //                   PlayNextSong());
-              //             },
-              //             child: Text("Next"),
-              //           ),
-              //           ElevatedButton(
-              //             onPressed: () {
-              //               context.read<Mp3StreamBloc>().add(
-              //                   PlayPreviousSong(left(song)));
-              //             },
-              //             child: Text("Previous"),
-              //           ),
-              //           ElevatedButton(
-              //             onPressed: () {
-              //               Navigator.push(
-              //                   context, MaterialPageRoute(builder: (context) {
-              //                 return RelatedSongScreen();
-              //               }));
-              //             },
-              //             child: Text("Related Songs"),
-              //           ),
-              //           BlocBuilder<ShuffleStateBloc, ShuffleState>(
-              //             builder: (context, state) {
-              //               if (state is UnShuffledSongsState) {
-              //                 return ElevatedButton(
-              //                   onPressed: () {
-              //                     context.read<Mp3StreamBloc>().add(
-              //                         ShuffleSongHistoryEvent(left(song)));
-              //                   },
-              //                   child: Text("Shuffle"),
-              //                 );
-              //               }
-              //               return ElevatedButton(
-              //                 onPressed: () {
-              //                   context.read<Mp3StreamBloc>().add(
-              //                       UnShuffleSongHistoryEvent(left(song)));
-              //                 },
-              //                 child: Text("Unshuffle"),
-              //               );
-              //             },
-              //           ),
-              //           BlocBuilder<
-              //               RepeatSongOrPlaylistBloc,
-              //               RepeatSongOrPlaylistState>(
-              //             builder: (context, state) {
-              //               if (state is NoRepeatState) {
-              //                 return ElevatedButton(
-              //                   onPressed: () {
-              //                     context.read<RepeatSongOrPlaylistBloc>().add(
-              //                         RepeatPlaylistEvent());
-              //                   },
-              //                   child: Text("Repeat Playlist"),
-              //                 );
-              //               } else if (state is PlaylistRepeatState) {
-              //                 return ElevatedButton(
-              //                   onPressed: () {
-              //                     context.read<RepeatSongOrPlaylistBloc>().add(
-              //                         RepeatSongEvent());
-              //                   },
-              //                   child: Text("Repeat Current Song"),
-              //                 );
-              //               }
-              //               return ElevatedButton(
-              //                 onPressed: () {
-              //                   context.read<RepeatSongOrPlaylistBloc>().add(
-              //                       UndoRepeatEvent());
-              //                 },
-              //                 child: Text("Undo Repeat"),
-              //               );
-              //             },
-              //           ),
-              //
-              //           if (mp3StreamBlocState is Mp3StreamPaused) ...[
-              //             ElevatedButton(
-              //               onPressed: () {
-              //                 context.read<Mp3StreamBloc>().add(
-              //                     ResumeMp3Stream(left(song)));
-              //               },
-              //               child: Text("Resume"),
-              //             ),
-              //           ]
-              //         ],
-              //       );
-              //     },
-              //         (downloadedSong) {
-              //       return const SizedBox();
-              //     }
-              // );
-            }
-            return const SizedBox();
+                      // Play/Pause Button
+                      Container(
+                        width: 65,
+                        height: 65,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [Colors.purple, Colors.deepPurple],
+                          ),
+                        ),
+                        child: BlocBuilder<PlayerBloc, Player>(
+                          builder: (context, state) {
+                            if (state is PlayerState) {
+                              return IconButton(
+                                icon: Icon(
+                                  state.isPlaying ? Icons.pause : Icons.play_arrow,
+                                  color: Colors.white,
+                                  size: 35,
+                                ),
+                                onPressed: () {
+                                  if (state.isPlaying) {
+                                    context.read<PlayerBloc>().add(PausePlayerEvent());
+                                  } else {
+                                    context.read<PlayerBloc>().add(ResumePlayerEvent());
+                                  }
+                                },
+                              );
+                            }
+                            return Icon(Icons.play_arrow, color: Colors.white, size: 35);
+                          },
+                        ),
+                      ),
+
+                      // Next Button
+                      IconButton(
+                        icon: Icon(Icons.skip_next, color: Colors.white, size: 35),
+                        onPressed: () {
+                          context.read<PlayerBloc>().add(PlayNextSongEvent());
+                        },
+                      ),
+
+                      // Repeat Button
+                      BlocBuilder<PlayerBloc, Player>(
+                        builder: (context, state) {
+                          if (state is PlayerState) {
+                            IconData iconData;
+                            Color iconColor;
+
+                            if (state.isSongRepeatEnabled) {
+                              iconData = Icons.repeat_one;
+                              iconColor = Colors.purple;
+                            } else if (state.isPlaylistRepeatEnabled) {
+                              iconData = Icons.repeat;
+                              iconColor = Colors.purple;
+                            } else {
+                              iconData = Icons.repeat;
+                              iconColor = Colors.white;
+                            }
+
+                            return IconButton(
+                              icon: Icon(
+                                iconData,
+                                color: iconColor,
+                                size: 25,
+                              ),
+                              onPressed: () {
+                                if (!state.isPlaylistRepeatEnabled && !state.isSongRepeatEnabled) {
+                                  context.read<PlayerBloc>().add(
+                                      ToggleRepeatModeEvent(mode: RepeatMode.playlist));
+                                } else if (state.isPlaylistRepeatEnabled) {
+                                  context.read<PlayerBloc>().add(
+                                      ToggleRepeatModeEvent(mode: RepeatMode.song));
+                                } else if (state.isSongRepeatEnabled) {
+                                  context.read<PlayerBloc>().add(
+                                      ToggleRepeatModeEvent(mode: RepeatMode.none));
+                                }
+                              },
+                            );
+                          }
+                          return SizedBox();
+                        },
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 25),
+
+                  // Additional Functions Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Lyrics Button
+                      _buildActionButton(
+                        context: context,
+                        icon: Icons.lyrics,
+                        label: "Lyrics",
+                        onTap: () {
+                          Navigator.of(context).push(
+                              MaterialPageRoute(builder: (context) {
+                                return const LyricsScreen();
+                              })
+                          );
+                        },
+                      ),
+
+                      // Related Songs Button
+                      _buildActionButton(
+                        context: context,
+                        icon: Icons.queue_music,
+                        label: "Related",
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) {
+                                return RelatedSongScreen();
+                              })
+                          );
+                        },
+                      ),
+
+                      // Playlists Button
+                      state.currentSong!.fold(
+                            (song) {
+                          return _buildActionButton(
+                            context: context,
+                            icon: Icons.playlist_add,
+                            label: "Add to Playlist",
+                            onTap: () {
+                              context.read<PlaylistBloc>().add(FetchPlaylists());
+                              showModalBottomSheet(
+                                context: context,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                                ),
+                                isScrollControlled: true,
+                                backgroundColor: Colors.grey[900],
+                                builder: (_) => Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                                  ),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: EdgeInsets.all(16),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(bottom: 16.0),
+                                          child: Text(
+                                            "Add to Playlist",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        BlocBuilder<PlaylistBloc, PlaylistState>(
+                                          builder: (context, playlistState) {
+                                            if (playlistState is PlaylistLoaded && !playlistState.isLoading) {
+                                              final playlists = playlistState.userPlaylists;
+                                              if (playlists.isNotEmpty) {
+                                                return Container(
+                                                  constraints: BoxConstraints(maxHeight: 300),
+                                                  child: ListView.builder(
+                                                    shrinkWrap: true,
+                                                    itemCount: playlists.length,
+                                                    itemBuilder: (context, index) {
+                                                      final playlist = playlists[index];
+                                                      return ListTile(
+                                                        leading: Container(
+                                                          width: 40,
+                                                          height: 40,
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.purple.withOpacity(0.7),
+                                                            borderRadius: BorderRadius.circular(8),
+                                                          ),
+                                                          child: Icon(Icons.my_library_music, color: Colors.white),
+                                                        ),
+                                                        title: Text(
+                                                          playlist['title'],
+                                                          style: TextStyle(color: Colors.white),
+                                                        ),
+                                                        subtitle: Text(
+                                                          "${playlist['tracks'].length} songs",
+                                                          style: TextStyle(color: Colors.grey[400]),
+                                                        ),
+                                                        onTap: () {
+                                                          state.currentSong!.fold(
+                                                                (song) {
+                                                              context.read<PlaylistBloc>().add(AddSongToPlaylist(
+                                                                songId: song.id,
+                                                                playlistId: playlist['playlistId'],
+                                                              ));
+                                                              Navigator.pop(context);
+                                                            },
+                                                                (downloadedSong) {},
+                                                          );
+                                                        },
+                                                      );
+                                                    },
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                            return SizedBox(
+                                              height: 100,
+                                              child: Center(
+                                                child: Text(
+                                                  "No playlists found. Create one below.",
+                                                  style: TextStyle(color: Colors.grey[400]),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        SizedBox(height: 16),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) {
+                                                return AlertDialog(
+                                                  backgroundColor: Colors.grey[900],
+                                                  title: Text(
+                                                    'Create Playlist',
+                                                    style: TextStyle(color: Colors.white),
+                                                  ),
+                                                  content: TextField(
+                                                    controller: _controller,
+                                                    style: TextStyle(color: Colors.white),
+                                                    decoration: InputDecoration(
+                                                      hintText: 'Playlist name',
+                                                      hintStyle: TextStyle(color: Colors.grey[400]),
+                                                      focusedBorder: UnderlineInputBorder(
+                                                        borderSide: BorderSide(color: Colors.purple),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.of(context).pop(null),
+                                                      child: Text(
+                                                        'Cancel',
+                                                        style: TextStyle(color: Colors.grey[400]),
+                                                      ),
+                                                    ),
+                                                    ElevatedButton(
+                                                      onPressed: () {
+                                                        Navigator.of(context).pop();
+                                                        context.read<PlaylistBloc>().add(CreatePlaylist(_controller.text));
+                                                        _controller.clear();
+                                                      },
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: Colors.purple,
+                                                      ),
+                                                      child: Text('Create'),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.purple,
+                                            minimumSize: Size(double.infinity, 50),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(15),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(Icons.add, size: 20),
+                                              SizedBox(width: 8),
+                                              Text("Create New Playlist"),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                            (downloadedSong) => SizedBox(),
+                      ),
+
+                      // Favorites Button
+                      state.currentSong!.fold(
+                            (song) {
+                          return _buildActionButton(
+                            context: context,
+                            icon: Icons.favorite_border,
+                            label: "Favorite",
+                            onTap: () {
+                              _showBottomSheet(context, song.id);
+                              context.read<AuthBloc>().add(FetchUserDataEvent());
+                            },
+                          );
+                        },
+                            (downloadedSong) => SizedBox(),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
           }
-          return const SizedBox();
+          return Center(
+            child: Text(
+              "No song is currently playing",
+              style: TextStyle(color: Colors.white),
+            ),
+          );
         }
+        return Center(child: CircularProgressIndicator());
+      },
+    );
+  }
 
-
+  Widget _buildActionButton({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.grey[800],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: Colors.white),
+          ),
+          SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(color: Colors.grey[400], fontSize: 12),
+          ),
+        ],
+      ),
     );
   }
 
   String _formatDuration(Duration duration) {
-    return "${duration.inMinutes}:${(duration.inSeconds % 60)
-        .toString()
-        .padLeft(2, '0')}";
+    return "${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}";
   }
-
 }
-
-
-// import 'package:flutter/material.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:jazz/features/stream_feature/presentation/bloc/playerBloc/player_bloc.dart';
-//
-// class ExpandedCurrentSong extends StatelessWidget {
-//   const ExpandedCurrentSong({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return BlocBuilder<PlayerBloc, Player>(
-//       builder: (context, state) {
-//         if(state is PlayerState){
-//           return Text("OK");
-//         }
-//         return const SizedBox();
-//       },
-//     );
-//   }
-// }

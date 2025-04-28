@@ -14,8 +14,9 @@ class UserPlaylistDataSource {
     final String userId = _firebaseAuth.currentUser!.uid;
     try {
       DocumentReference docRef = _fireStore.collection("Users").doc(userId);
-
-      await docRef.collection("Playlists").doc("$userId${DateTime.now()}").set({
+       final playlistId = "$userId${DateTime.now()}";
+      await docRef.collection("Playlists").doc(playlistId).set({
+        "playlistId": playlistId,
         "title": title,
         "tracks": [],
       });
@@ -49,7 +50,16 @@ class UserPlaylistDataSource {
     }
     return null;
   }
-
+Future<Map?> fetchPlaylist(String playlistId)async{
+    final String userId = _firebaseAuth.currentUser!.uid;
+    try{
+      DocumentSnapshot documentSnapshot = await _fireStore.collection("Users").doc(userId).collection("Playlists").doc(playlistId).get();
+      return documentSnapshot.data() as Map;
+    }catch(e){
+      print(e.toString());
+    }
+    return null;
+}
   Future<void> changePlaylistTitle(String title,String playlistId)async{
     final String userId = _firebaseAuth.currentUser!.uid;
 

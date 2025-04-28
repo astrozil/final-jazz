@@ -62,3 +62,27 @@ class ChangePasswordEvent extends AuthEvent{
   ChangePasswordEvent({required this.email, required this.oldPassword, required this.newPassword});
 }
 class FetchUserDataEvent extends AuthEvent {}
+
+class GetFriendsEvent extends AuthEvent{
+
+}
+
+class AuthUpdateStateEvent extends AuthEvent{
+  final AuthState state;
+
+  AuthUpdateStateEvent({required this.state});
+}
+
+class ResetPasswordEvent extends AuthEvent{
+  final String email;
+
+  ResetPasswordEvent({required this.email});
+
+}
+
+class UpdateEmailEvent extends AuthEvent{
+  final String newEmail;
+  final String password;
+
+  UpdateEmailEvent({required this.newEmail,required this.password});
+}

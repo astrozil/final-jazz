@@ -50,4 +50,34 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> changePassword(String email, String oldPassword, String newPassword) {
   return authDataSource.changePassword(email, oldPassword, newPassword);
   }
+
+  @override
+  Stream<List<AppUser>> searchUsers(String query) {
+   return authDataSource.searchUsers(query);
+  }
+
+  @override
+  Stream<List<AppUser>> getFriends(String userId) {
+  return authDataSource.getFriends(userId);
+  }
+
+  @override
+  Future<AppUser> getUserById(String userId) {
+    return authDataSource.getUserById(userId);
+  }
+
+  @override
+  Future<void> updateFcmToken(String userId, String token)async{
+    await authDataSource.updateFcmToken(userId, token);
+  }
+
+  @override
+  Future<void> resetPassword({required String email})async{
+    await authDataSource.resetPassword(email: email);
+  }
+
+  @override
+  Future<void> updateEmail({required String password, required String newEmail})async {
+   await authDataSource.updateEmail(password: password, newEmail: newEmail);
+  }
 }

@@ -10,10 +10,11 @@ class LyricsBloc extends Bloc<LyricsEvent, LyricsState> {
   LyricsBloc({required this.getLyrics}) : super(LyricsInitial()) {
     on<GetLyricsEvent>((event, emit)async {
      var result = await getLyrics(event.artist,event.songName);
-     result.fold(
-         (failure)=> emit(NoLyricsState(failure: failure.message)),
-         (lyrics)=> emit(GotLyricsState(lyrics: lyrics))
-     );
+     if(result != null && result.isNotEmpty){
+       emit(GotLyricsState(syncedLyrics: result));
+     }else{
+       emit(NoLyricsState(failure: "No Lyrics"));
+     }
     });
   }
 }

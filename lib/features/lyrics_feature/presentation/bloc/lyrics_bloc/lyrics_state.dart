@@ -5,9 +5,9 @@ sealed class LyricsState {}
 
 final class LyricsInitial extends LyricsState {}
 final class GotLyricsState extends LyricsState{
-   final String lyrics;
+   final List<Map<String, dynamic>>? syncedLyrics;
 
-  GotLyricsState({required this.lyrics});
+  GotLyricsState({required this.syncedLyrics});
 
 }
 final class NoLyricsState extends LyricsState{

@@ -18,7 +18,7 @@ class FavouritePlaylistDataSource{
         _fireStore = fireStore,
         _firebaseAuth = firebaseAuth;
 
-  Future<List<RelatedSong>> fetchBillboardSongs(List<String> songIds) async {
+  Future<List<RelatedSong>> fetchFavouriteSongs(List songIds) async {
     List<RelatedSong> favouriteSongs = [];
     try {
       final response = await dio.post(baseUrl,data: {
