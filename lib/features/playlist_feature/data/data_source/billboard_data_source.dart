@@ -18,8 +18,11 @@ class BillboardDataSource {
       if (response.statusCode == 200) {
 
         final result = response.data;
-        for(var billboardSong in result ){
+
+        for(var billboardSong in result['data'] ){
+
           billboardSongs.add(BillboardSong.fromJson(billboardSong));
+
         }
         return billboardSongs;
       } else {

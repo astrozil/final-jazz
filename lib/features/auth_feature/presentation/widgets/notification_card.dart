@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:jazz/core/app_color.dart';
+import 'package:jazz/core/dependency_injection.dart';
+import 'package:jazz/core/widgets/build_handle_bar.dart';
+import 'package:jazz/core/widgets/confirm_widget.dart';
+import 'package:jazz/core/widgets/custom_snack_bar.dart';
 import 'package:jazz/features/auth_feature/domain/entities/notification.dart' as noti;
+import 'package:jazz/features/auth_feature/presentation/bloc/notification_bloc/notification_bloc.dart';
+import 'package:jazz/features/auth_feature/presentation/screens/email_change_screen.dart';
 
 class NotificationCard extends StatelessWidget {
   final noti.Notification notification;
@@ -76,17 +84,63 @@ class NotificationCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              _formatDate(notification.createdAt),
-                              style: TextStyle(
-                                color: Colors.grey.shade400,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
+                            GestureDetector(
+                              onTap: (){
+
+                              showModalBottomSheet(
+                                  context: context,
+                                  backgroundColor: AppColors.modalBackgroundColor,
+                                  builder: (context){
+                                return SizedBox(
+
+                                  width: MediaQuery.of(context).size.width,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                     Center(child: buildHandleBar()),
+                                     SizedBox(height: 16.h,),
+                                     Padding(
+                                       padding: const EdgeInsets.all(16.0),
+                                       child: GestureDetector(
+                                         onTap:(){
+                                           Navigator.pop(context);
+                                       showDialog(context: context, builder: (context){
+                                         return confirmWidget(
+                                             context: context,
+                                             confirmButton: ElevatedButton(
+                                                 style: ElevatedButton.styleFrom(
+                                                   backgroundColor: Colors.red
+                                                 ),
+                                                 onPressed: (){
+                                               context.read<NotificationBloc>().add(DeleteNotification(notificationId: notification.id));
+                                               Navigator.pop(context);
+                                               ScaffoldMessenger.of(context).showSnackBar(CustomSnackBar.show(message: "Notification has been deleted."));
+                                             }, child: Text("Delete",style: TextStyle(color: Colors.white),)),
+                                            title: "Delete notification?", text: "This notification will be permanently deleted.");
+                                       })     ;
+                                    },
+                                         child: Row(
+                                           children: [
+                                             Image.asset("assets/icons/delete.png",height: 30.h,width: 30.w,color: Colors.red,  ),
+                                              SizedBox(width: 10.w,),
+                                             Text("Delete this notification", style: TextStyle(color: Colors.white),),
+                                           ],
+                                         ),
+                                       ),
+                                     ),
+
+                                      SizedBox(height: 30.h,)
+                                    ],
+                                  ),
+                                );
+                              });
+                              },
+                              child: Icon(Icons.more_horiz_outlined,color: Colors.white,),
+                            )
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 3),
                         Text(
                           notification.body,
                           style: TextStyle(
@@ -96,6 +150,14 @@ class NotificationCard extends StatelessWidget {
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          _formatDate(notification.createdAt),
+                          style: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ],
                     ),

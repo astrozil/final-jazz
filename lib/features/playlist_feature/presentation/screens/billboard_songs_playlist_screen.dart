@@ -1,9 +1,21 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:jazz/core/app_color.dart';
 import 'package:jazz/features/playlist_feature/presentation/bloc/playlist_bloc/playlist_bloc.dart';
+import 'package:jazz/features/stream_feature/domain/entities/RelatedSong.dart';
 import 'package:jazz/features/stream_feature/presentation/bloc/playerBloc/player_bloc.dart';
 
+import '../../../../core/routes.dart';
+import '../../../../core/widgets/custom_snack_bar.dart';
+import '../../../../core/widgets/song_widget.dart';
+import '../../../download_feature/domain/entities/download_request.dart';
+import '../../../download_feature/presentation/bloc/DownloadedOrNotBloc/downloaded_or_not_bloc.dart';
+import '../../../download_feature/presentation/bloc/download/download_bloc.dart';
+import '../../../search_feature/presentation/bloc/artist_bloc/artist_bloc.dart';
+import '../../../search_feature/presentation/widgets/share_user_selection.dart';
+import '../../../search_feature/presentation/widgets/user_selection_bottom_sheet.dart';
 
 class BillboardSongsPlaylistScreen extends StatelessWidget {
   const BillboardSongsPlaylistScreen({Key? key}) : super(key: key);
@@ -11,65 +23,285 @@ class BillboardSongsPlaylistScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.primaryBackgroundColor,
       appBar: AppBar(
-        title: const Text('Billboard Songs'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_outlined, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: BlocBuilder<PlaylistBloc, PlaylistState>(
         builder: (context, state) {
-          if (state is PlaylistInitial) {
-            // While fetching data, show a loading indicator.
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is PlaylistLoaded) {
+          if (state is PlaylistLoaded && state.isLoading && state.billboardSongsPlaylist.isEmpty) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            );
+          } else if (state is PlaylistLoaded && state.billboardSongsPlaylist.isNotEmpty) {
             final songs = state.billboardSongsPlaylist;
             if (songs.isEmpty) {
-              return const Center(child: Text('No Billboard Songs available'));
+              return const Center(
+                child: Text(
+                    "No Billboard songs available",
+                    style: TextStyle(color: Colors.white)
+                ),
+              );
             }
-            // Build a list view of Billboard songs.
-            return ListView.builder(
-              itemCount: songs.length,
-              itemBuilder: (context, index) {
-                final song = songs[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                  child: ListTile(
-                    leading: song.song.thumbnails.defaultThumbnail.url != null && song.song.thumbnails.defaultThumbnail.url.isNotEmpty
-                        ? Stack(
-                      alignment: Alignment.bottomRight,
-                      children: [
-                        CircleAvatar(
-                          backgroundImage: NetworkImage(song.song.thumbnails.defaultThumbnail.url),
-                          radius: 24,
-                        ),
-                        // Overlay the current rank on the image.
-                        Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            '${song.rank}',
-                            style: const TextStyle(color: Colors.white, fontSize: 15),
-                          ),
-                        )
-                      ],
-                    )
-                        : CircleAvatar(child: Text('${song.rank}')),
-                    title: Text(song.song.title),
-                    subtitle: Text('Peak Position: ${song.peakPos} | Weeks: ${song.weeks}'),
-                    trailing: Text('Last Week: ${song.lastPos}'),
-                    onTap: (){
-                      context.read<PlayerBloc>().add(PlaySongEvent(song: left(song.song),albumTracks: songs));
-                    },
+
+            return CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // Album Cover
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildAlbumCover(songs, context),
                   ),
-                );
-              },
+                ),
+
+                // Playlist Info
+                SliverToBoxAdapter(
+                  child: Center(
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Billboard Songs",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "${songs.length} TRACKS",
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Play and Shuffle Buttons
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (songs.isNotEmpty) {
+                                context.read<PlayerBloc>().add(
+                                    PlaySongEvent(song: left(songs.first.song), albumTracks: songs)
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.play_arrow),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Play",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final List<RelatedSong> shuffleSongs = List.from(songs);
+                              shuffleSongs.shuffle();
+                              context.read<PlayerBloc>().add(
+                                  PlaySongEvent(song: left(shuffleSongs.first.song), albumTracks: shuffleSongs)
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[800],
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.shuffle),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Shuffle",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Song List
+                SliverPadding(
+                  padding: const EdgeInsets.only(top: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                        final song = songs[index];
+                        return songWidget(context: context, song: song.song,songs: songs);
+                      },
+                      childCount: songs.length,
+                    ),
+                  ),
+                ),
+              ],
             );
           } else if (state is PlaylistError) {
-            return Center(child: Text('Error: ${state.errorMessage}'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    color: Colors.redAccent,
+                    size: 60,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Oops! Something went wrong',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                    child: Text(
+                      state.errorMessage,
+                      style: TextStyle(color: Colors.white70),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            );
           }
-          return const SizedBox.shrink();
         },
+      ),
+    );
+  }
+
+  Widget _buildAlbumCover(List<dynamic> songs, BuildContext context) {
+    if (songs.isEmpty) {
+      // Fallback for empty songs list
+      return AspectRatio(
+        aspectRatio: 1,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[800],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Center(
+            child: Icon(Icons.music_note, size: 80, color: Colors.white70),
+          ),
+        ),
+      );
+    }
+
+    // For a single track, show a large image
+    if (songs.length == 1) {
+      return AspectRatio(
+        aspectRatio: 1,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            songs[0].song.thumbnails.highThumbnail.url,
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    }
+
+    // For multiple tracks, show a grid
+    return Center(
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.6,
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: GridView.count(
+            crossAxisCount: 2,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            children: _buildAlbumGridItems(songs),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildAlbumGridItems(List<dynamic> songs) {
+    final List<Widget> gridItems = [];
+
+    // Logic based on track count
+    if (songs.length == 2) {
+      // For 2 tracks: pattern [1,2,1,2]
+      gridItems.add(_buildGridItem(songs[0]));
+      gridItems.add(_buildGridItem(songs[1]));
+      gridItems.add(_buildGridItem(songs[0]));
+      gridItems.add(_buildGridItem(songs[1]));
+    } else if (songs.length == 3) {
+      // For 3 tracks: pattern [1,2,3,1]
+      gridItems.add(_buildGridItem(songs[0]));
+      gridItems.add(_buildGridItem(songs[1]));
+      gridItems.add(_buildGridItem(songs[2]));
+      gridItems.add(_buildGridItem(songs[0]));
+    } else {
+      // For 4 or more tracks: show first 4 tracks
+      for (int i = 0; i < 4 && i < songs.length; i++) {
+        gridItems.add(_buildGridItem(songs[i]));
+      }
+    }
+
+    return gridItems;
+  }
+
+  Widget _buildGridItem(dynamic song) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        song.song.thumbnails.highThumbnail.url,
+        fit: BoxFit.cover,
       ),
     );
   }

@@ -26,13 +26,27 @@ class DownloadedOrNotBloc extends Bloc<DownloadedOrNotEvent, DownloadedOrNotStat
     });
 
     on<DeleteDownloadedSongEvent>((event,emit)async{
+      try{
+
       final directory = await getExternalStorageDirectory();
-      final filePath = '${directory?.path}/${event.title}-${event.artist}-${event.videoID}.mp3'; // Assuming mp3 format, adjust as needed
+      String filePath = "";
+     if(event.path ==null) {
+        filePath = '${directory?.path}/${event.title}-${event
+           .artist}-${event.videoID}.mp3';
+     }else{
+        filePath = '${directory?.path}/${event.path}';
+     }
+
+      // Assuming mp3 format, adjust as needed
       final file = File(filePath);
 
       if(file.existsSync()){
+        print("LSDjfslkfdjld0");
+
         file.deleteSync();
         emit(DeletedSongState());
+      }}catch(e){
+        print(e.toString());
       }
     });
   }

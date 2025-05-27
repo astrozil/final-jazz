@@ -4,9 +4,12 @@ import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:jazz/core/app_color.dart';
 import 'package:jazz/core/dependency_injection.dart';
 import 'package:jazz/core/routes.dart';
 import 'package:jazz/core/widgets/app_with_player.dart';
+import 'package:jazz/core/widgets/song_widget.dart';
 
 import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc.dart';
 import 'package:jazz/features/download_feature/data/datasources/download_datasource.dart';
@@ -21,6 +24,7 @@ import 'package:jazz/features/playlist_feature/presentation/bloc/playlist_bloc/p
 import 'package:jazz/features/playlist_feature/presentation/screens/billboard_songs_playlist_screen.dart';
 import 'package:jazz/features/playlist_feature/presentation/screens/suggested_songs_of_favourite_artists_playlist_screen.dart';
 import 'package:jazz/features/playlist_feature/presentation/screens/trending_songs_playlist_screen.dart';
+import 'package:jazz/features/search_feature/domain/entities/album.dart';
 import 'package:jazz/features/search_feature/domain/entities/song.dart';
 import 'package:jazz/features/search_feature/domain/usecases/search.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/albumBloc/album_bloc.dart';
@@ -38,10 +42,11 @@ import 'package:jazz/features/search_feature/presentation/screens/expanded_curre
 import 'package:jazz/features/search_feature/presentation/screens/songs_result_screen.dart';
 import 'package:jazz/features/search_feature/presentation/widgets/search_suggestion_widget.dart';
 import 'package:jazz/features/search_feature/presentation/widgets/user_selection_bottom_sheet.dart';
-// import 'package:jazz/features/stream_feature/presentation/bloc/mp3StreamBloc/mp3_stream_bloc.dart';
 import 'package:jazz/features/stream_feature/presentation/bloc/playerBloc/player_bloc.dart';
-
 import 'package:jazz/features/stream_feature/presentation/screens/streamScreen.dart';
+
+import '../../../../core/widgets/custom_snack_bar.dart';
+import '../widgets/share_user_selection.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -53,61 +58,253 @@ class _SearchScreenState extends State<SearchScreen>{
   final DraggableScrollableController _scrollableController = DraggableScrollableController();
   final FocusNode _focusNode = FocusNode();
 
-
-
+  // Recent searches and suggestions state
+  List<String> _recentSearches = [];
+  List<String> _suggestions = [];
+  List<String> _filteredRecentSearches = [];
+  bool _isTyping = false;
+  bool _showSearchResults = false;
 
   void _expandBox() {
     _scrollableController.animateTo(
-      1.0, // Full expansion
-      duration: Duration(milliseconds: 500),
+      1.0,
+      duration: const Duration(milliseconds: 500),
       curve: Curves.easeInOut,
     );
   }
-  // void _collapseBox() {
-  //   _scrollableController.animateTo(
-  //     0.13, // Collapse back to minimum size
-  //     duration: Duration(milliseconds: 500),
-  //     curve: Curves.easeInOut,
-  //   );
-  // }
- @override
- void initState() {
-    // TODO: implement initState
+
+  // Load recent searches from Firebase
+  Future<void> _loadRecentSearches() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        final doc = await FirebaseFirestore.instance.collection("Users").doc(userId).get();
+        if (doc.exists && doc.data()?['searchHistory'] != null) {
+          setState(() {
+            _recentSearches = List<String>.from(doc.data()!['searchHistory']).reversed.take(10).toList();
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading recent searches: $e');
+    }
+  }
+
+  // Remove recent search
+  Future<void> _removeRecentSearch(String searchTerm) async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId != null) {
+        await FirebaseFirestore.instance.collection("Users").doc(userId).update({
+          "searchHistory": FieldValue.arrayRemove([searchTerm])
+        });
+        setState(() {
+          _recentSearches.remove(searchTerm);
+        });
+      }
+    } catch (e) {
+      print('Error removing search term: $e');
+    }
+  }
+
+  // FIXED: Generate suggestions based on input and remove duplicates with recent searches
+  void _generateSuggestions(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _suggestions = [];
+        _filteredRecentSearches = [];
+        _isTyping = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isTyping = true;
+
+      // Filter recent searches that match the query
+      _filteredRecentSearches = _recentSearches
+          .where((item) => item.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+
+      // Generate common suggestions
+      List<String> commonSuggestions = [
+        query,
+        '${query} songs',
+        '${query} artist',
+        '${query} album',
+        '${query} lyrics',
+      ];
+
+      // FIXED: Remove duplicates - filter out suggestions that are already in recent searches
+      _suggestions = commonSuggestions
+          .where((suggestion) => !_recentSearches.any((recent) =>
+      recent.toLowerCase() == suggestion.toLowerCase()))
+          .take(6)
+          .toList();
+    });
+  }
+
+  // Build recent searches widget (when not typing)
+  Widget _buildRecentSearches() {
+    if (_recentSearches.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Text(
+            'No recent searches',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+         Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text(
+            'Recent Searches',
+            style: TextStyle(fontSize: 18, color: Colors.white.withOpacity(0.7)),
+          ),
+        ),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _recentSearches.length,
+          itemBuilder: (context, index) {
+            final searchTerm = _recentSearches[index];
+            return ListTile(
+              leading: const Icon(Icons.history, color: Colors.grey),
+              title: Text(searchTerm,style: TextStyle(color: Colors.grey),),
+              trailing: IconButton(
+                icon: const Icon(Icons.close, color: Colors.grey),
+                onPressed: () => _removeRecentSearch(searchTerm),
+              ),
+              onTap: () {
+                _controller.text = searchTerm;
+                _performSearch(searchTerm);
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // FIXED: Build suggestions widget (when typing) - shows filtered recent + unique suggestions
+  Widget _buildSuggestions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Show filtered recent searches first (if any)
+        if (_filteredRecentSearches.isNotEmpty) ...[
+
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _filteredRecentSearches.length,
+            itemBuilder: (context, index) {
+              final searchTerm = _filteredRecentSearches[index];
+              return ListTile(
+                leading: const Icon(Icons.history, color: Colors.grey),
+                title: Text(searchTerm,style: TextStyle(color: Colors.grey),),
+                trailing: IconButton(
+                  icon: const Icon(Icons.north_west, color: Colors.grey),
+                  onPressed: () {
+                    _controller.text = searchTerm;
+                    _controller.selection = TextSelection.fromPosition(
+                      TextPosition(offset: _controller.text.length),
+                    );
+                  },
+                ),
+                onTap: () {
+                  _controller.text = searchTerm;
+                  _performSearch(searchTerm);
+                },
+              );
+            },
+          ),
+        ],
+
+        // Show unique suggestions
+        if (_suggestions.isNotEmpty) ...[
+          if (_filteredRecentSearches.isNotEmpty)
+
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _suggestions.length,
+            itemBuilder: (context, index) {
+              final suggestion = _suggestions[index];
+              return ListTile(
+                leading: const Icon(Icons.search, color: Colors.grey),
+                title: Text(suggestion,style: TextStyle(color: Colors.grey),),
+                trailing: const Icon(Icons.north_west, color: Colors.grey),
+                onTap: () {
+                  _controller.text = suggestion;
+                  _performSearch(suggestion);
+                },
+              );
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  @override
+  void initState() {
     super.initState();
+
+    _loadRecentSearches();
+
+    _controller.addListener(() {
+      _generateSuggestions(_controller.text);
+    });
+
     _scrollableController.addListener(() {
-      // Check the size of the sheet
       if (_scrollableController.size > 0.15) {
-         context.read<CurrentSongWidgetBloc>().add(CurrentSongWidgetExpandEvent());
+        context.read<CurrentSongWidgetBloc>().add(CurrentSongWidgetExpandEvent());
       } else if (_scrollableController.size < 0.14) {
         context.read<CurrentSongWidgetBloc>().add(CurrentSongWidgetCollapseEvent());
       }
     });
   }
+
   @override
   void dispose() {
     _controller.dispose();
     _scrollableController.dispose();
     _focusNode.dispose();
     super.dispose();
-
   }
+
   void _performSearch(String query) async {
     if (query.isEmpty) return;
 
+    setState(() {
+      _showSearchResults = true;
+      _isTyping = false;
+    });
+
     context.read<SongBloc>().add(SearchForSongs(query));
     context.read<SearchSuggestionBloc>().add(ClearSearchSuggestionsEvent());
+
     final userId = FirebaseAuth.instance.currentUser!.uid;
     await FirebaseFirestore.instance.collection("Users").doc(userId).update({
       "searchHistory": FieldValue.arrayUnion([query])
     });
 
+    _loadRecentSearches();
     _focusNode.unfocus();
   }
+
   void showUserSelectionBottomSheet(BuildContext context,Song song) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (BuildContext context) {
@@ -115,396 +312,359 @@ class _SearchScreenState extends State<SearchScreen>{
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
-
     return BlocProvider(
-  create: (context) => di<DownloadBloc>(),
-
-  child: InternetConnectionWrapper (
-    child: Scaffold(
-
-        resizeToAvoidBottomInset: false,
-        body: Stack(
-          children: [
-
-            SafeArea(
-              child: BlocListener<DownloadBloc, DownloadState>(
-                listener: (context, state) {
-
-
-
-
-
-                  if (state is DownloadOnProgress){
-                   print("Progress : ${state.progress}");
-                 }else if (state is DownloadPaused){
-                    print("Paused");
-                  }
-
-                  else if (state is DownloadFinished){
-                   print("Downloading Finished");
-                 }
-                },
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _controller,
-                              focusNode: _focusNode,
-                              decoration: InputDecoration(
-                                hintText: 'Search YouTube',
-                                suffixIcon: IconButton(
-                                  icon: Icon(Icons.search),
-                                  onPressed: () async{
-
-                                    _performSearch(_controller.text);
-                                  },
-                                ),
+      create: (context) => di<DownloadBloc>(),
+      child: InternetConnectionWrapper(
+        child: Scaffold(
+          backgroundColor: AppColors.primaryBackgroundColor,
+          resizeToAvoidBottomInset: false,
+          body: Stack(
+            children: [
+              SafeArea(
+                child: BlocListener<DownloadBloc, DownloadState>(
+                  listener: (context, state) {
+                    if (state is DownloadOnProgress){
+                      print("Progress : ${state.progress}");
+                    }else if (state is DownloadPaused){
+                      print("Paused");
+                    }
+                    else if (state is DownloadFinished){
+                      print("Downloading Finished");
+                    }
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Search Bar
+                      SizedBox(height: 16.h,),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Text("Explore",style: TextStyle(color: Colors.white,fontSize: 20),),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(25.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
                               ),
-                              onSubmitted: (value) {
-                                _performSearch(value);
-                              },
-                            ),
+                            ],
                           ),
-                          ElevatedButton(onPressed: (){
-                  Navigator.pushNamed(context, Routes.profileScreen);
-                          }, child: Icon(Icons.person))
-                        ],
+                          child: TextField(
+                            controller: _controller,
+                            focusNode: _focusNode,
+                            style: const TextStyle(fontSize: 16),
+                            decoration: InputDecoration(
+                              hintText: 'Search for songs, artists, albums...',
+                              hintStyle: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 16,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.search,
+                                color: Colors.grey[600],
+                                size: 24,
+                              ),
+                              suffixIcon: _controller.text.isNotEmpty
+                                  ? IconButton(
+                                icon: Icon(
+                                  Icons.clear,
+                                  color: Colors.grey[600],
+                                  size: 20,
+                                ),
+                                onPressed: () {
+                                  _controller.clear();
+                                  setState(() {
+                                    _isTyping = false;
+                                    _showSearchResults = false;
+                                  });
+                                },
+                              )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 16,
+                              ),
+                            ),
+                            onSubmitted: (value) {
+                              _performSearch(value);
+                            },
+                          ),
+                        ),
                       ),
 
-                    ),
-                    SearchSuggestion(
-                      controller: _controller,
-                      focusNode: _focusNode,
-                      onSearch: (query){
-                      _performSearch(query);
-                      },
-                    ),
-                    Expanded(
-                      child: BlocBuilder<SongBloc, SongState>(
-                        builder: (context, state) {
-                          if (state is SongLoading) {
-                            return Center(child: CircularProgressIndicator());
-                          } else if (state is SongLoaded) {
+                      // Main Content Area
+                      Expanded(
+                        child: _buildMainContent(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
 
-                            List<Song> songs = state.songs.where((s)=> s.category == "Songs").toList();
-                            dynamic topResult =   state.songs.where((s)=> s.category == "Top result").toList().isNotEmpty ?state.songs.where((s)=> s.category == "Top result").first: null ;
-                            List videos = state.songs.where((s)=> s.category == "Videos").toList();
-                            List albums = state.songs.where((s)=> s.category == "Albums").toList();
-                            List artists = state.songs.where((s)=> s.category == "Artists").toList();
-                            List featured_playlists = state.songs.where((s)=> s.category == "Featured Playlists").toList();
-                            List community_playlists = state.songs.where((s)=> s.category == "Community Playlists").toList();
-                          return ListView(
-                            children: [
-                             if(topResult != null)
-                               Column(
-                                 children: [
-                                   Text("Top Result"),
-                                   ListTile(
-                                     leading: Image.network(topResult.thumbnails.defaultThumbnail.url),
-                                     title: topResult.resultType != "artist" ?  Text(topResult.title): Text(topResult.artists.first['name']),
-                                     subtitle:topResult.resultType != "artist" ?
-                                     Text("${topResult.resultType == 'video' ? "song" : topResult.resultType} . ${topResult.artists.first['name']}")
-                                         : Text(topResult.resultType),
-                                     onTap: (){
-                                       if(topResult.resultType == "song" || topResult.resultType == "video"){
-                                         final isFromAlbum = context.read<PlayerBloc>().state.isFromAlbum;
-                                         if(isFromAlbum){
-                                           context.read<PlayerBloc>().add(UpdateStateEvent(state: context.read<PlayerBloc>().state.copyWith(isFromAlbum: false)));
-                                         }
-                                         context.read<PlayerBloc>().add(PlaySongEvent(song: dartz.left(topResult)));
-                                       }else if(topResult.resultType == "album"){
-                                         context.read<AlbumBloc>().add(SearchAlbum(albumId: topResult.browseId));
-                                         Navigator.push(context, MaterialPageRoute(builder: (context){
-                                           return AlbumScreen();
-                                         }));
-                                       }else if(topResult.resultType == "artist"){
-                                         context.read<ArtistBloc>().add(FetchArtistEvent(artistId: topResult.browseId));
-                                         Navigator.push(context, MaterialPageRoute(builder: (context){
-                                           return ArtistDetailScreen();
-                                         }));
-                                       }
-                                     },
-                                   ),
-                                 ],
-                               ),
+        ),
+      ),
+    );
+  }
 
+  Widget _buildMainContent() {
+    if (_showSearchResults) {
+      return BlocBuilder<SongBloc, SongState>(
+        builder: (context, state) {
+          if (state is SongLoading) {
+            return  Center(child: CircularProgressIndicator(color: Colors.white,));
+          } else if (state is SongLoaded) {
+            List<Song> songs = state.songs.where((s)=> s.category == "Songs").toList();
+            dynamic topResult = state.songs.where((s)=> s.category == "Top result").toList().isNotEmpty ?state.songs.where((s)=> s.category == "Top result").first: null ;
+            List albums = state.songs.where((s)=> s.category == "Albums").toList();
+            List artists = state.songs.where((s)=> s.category == "Artists").toList();
 
-
-                              Row(
-                                children: [
-                                  Text("Songs"),
-                                  ElevatedButton(onPressed: (){
-                                  context.read<SearchBloc>().add(SearchSongsRequested(query: _controller.text));
-                                  Navigator.push(context, MaterialPageRoute(builder: (context){
-                                    return SongsResultScreen();
-                                  }));
-                                  }, child: Text("See all"))
-                                ],
-                              ),
-
-                              ListView.builder(
-                                shrinkWrap: true,
-                                  itemCount: songs.length <3? songs.length : 3,
-                                  itemBuilder: (context,index){
-                                  var song = songs[index];
-                                    return InkWell(
-                                      onTap: (){
-                                        // context.read<RelatedSongBloc>().add(FetchRelatedSongEvent(song.id));
-                                        // Navigator.push(context, MaterialPageRoute(builder: (context){
-                                        //   return StreamScreen();
-                                        // }));
-                                        final isFromAlbum = context.read<PlayerBloc>().state.isFromAlbum;
-                                        if(isFromAlbum){
-                                          context.read<PlayerBloc>().add(UpdateStateEvent(state: context.read<PlayerBloc>().state.copyWith(isFromAlbum: false)));
-                                        }
-                                        context.read<PlayerBloc>().add(PlaySongEvent(song: dartz.left(song)));
-                                      },
-                                      child: ListTile(
-                                          leading: ClipRRect(child: Image(image: NetworkImage(song.thumbnails.defaultThumbnail.url)),borderRadius: BorderRadius.circular(5),),
-                                          title: Text(song.title),
-                                          subtitle: Text( song.artists
-                                              .map((artist) => artist['name'] as String)
-                                              .join(', '),),
-                                          trailing:
-                                          ElevatedButton(onPressed: (){
-                                            context.read<DownloadedOrNotBloc>().add(CheckIfDownloadedEvent(song.id,song.title,song.artists.first['name']));
-                                            showModalBottomSheet(
-                                              context: context,
-                                              shape: const RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                                              ),
-                                              builder: (BuildContext contextt) {
-                                                return Container(
-                                                  width: double.infinity,
-                                                  height: 300,
-                                                  padding: const EdgeInsets.all(16),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.white,
-                                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                                                  ),
-                                                  child: Column(
-
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-
-                                                      BlocBuilder<DownloadedOrNotBloc, DownloadedOrNotState>(
-                                                        builder: (context, state) {
-                                                          return ElevatedButton(
-                                                            onPressed: () {
-                                                              if(state is DownloadedSongState){
-                                                                context.read<DownloadedOrNotBloc>().add(DeleteDownloadedSongEvent(song.id, song.title,song.artists.first['name']));
-                                                                Navigator.pop(context);
-                                                              }else if(state is NotDownloadedSongState){
-                                                                context.read<DownloadBloc>().add(
-                                                                    DownloadSongEvent(DownloadRequest(videoID:song.id,title: song.title,artist: song.artists.first['name'],thumbnail:song.thumbnails.defaultThumbnail.url,videoUrl: song.url)));
-                                                              }
-                                                            },
-                                                            child: state is DownloadedSongState? const Text('Remove from download'): const Text("Download"),
-                                                          );
-                                                        },
-                                                      ),
-                                                      ElevatedButton(onPressed: (){
-                                                        context.read<DownloadedSongsBloc>().add(GetDownloadedSongsEvent());
-                                                        Navigator.push(context, MaterialPageRoute(builder: (context){
-                                                          return DownloadedSongsScreen();
-                                                        }));
-                                                      }, child: Text("Go To Downloaded Songs")),
-                                                      ElevatedButton(onPressed: (){
-                                                        showUserSelectionBottomSheet(context,song);
-                                                      }, child: Text("Share")),
-
-                                                    ],
-                                                  ),
-                                                );
-                                              },
-                                            );
-                                          }, child: Text("More"))
-
-
-
-                                      ),
-                                    );
-                                  }),
-                              Row(
-                                children: [
-                                  Text("Albums"),
-                                  ElevatedButton(onPressed: (){
-                                    context.read<SearchBloc>().add(SearchAlbumsRequested(query: _controller.text));
-                                    Navigator.push(context, MaterialPageRoute(builder: (context){
-                                      return AlbumsResultScreen();
-                                    }));
-                                  }, child: Text("See all"))
-                                ],
-                              ),
-                              ListView.builder(
-                                  shrinkWrap: true,
-                                  itemCount: albums.length<3 ? albums.length : 3,
-                                  itemBuilder: (context,index){
-                                    return InkWell(
-                                      onTap: (){
-
-                                        context.read<AlbumBloc>().add(SearchAlbum(albumId: albums[index].browseId));
-                                        Navigator.push(context, MaterialPageRoute(builder: (context){
-                                          return AlbumScreen();
-                                        }));
-                                      },
-                                      child: ListTile(
-                                        leading: Image.network(albums[index].thumbnails.defaultThumbnail.url),
-                                        title: Text(albums[index].title),
-                                      ),
-                                    );
-                                  }),
-                              Row(
-                                children: [
-                                  Text("Artists"),
-                                  ElevatedButton(onPressed: (){
-                                    context.read<SearchBloc>().add(SearchArtistsRequested(query: _controller.text));
-                                    Navigator.push(context, MaterialPageRoute(builder: (context){
-                                      return ArtistsResultScreen();
-                                    }));
-                                  }, child: Text("See all"))
-                                ],
-                              ),
-                              ListView.builder(
-                                  shrinkWrap: true,
-                                  itemCount: artists.length <3 ? artists.length: 3,
-                                  itemBuilder: (context,index){
-                                    return ListTile(
-                                      leading: Image.network(artists[index].thumbnails.defaultThumbnail.url),
-                                      title: Text(artists[index].artists.first['name']),
-                                      onTap: (){
-                                        context.read<ArtistBloc>().add(FetchArtistEvent(artistId: artists[index].browseId));
-                                        Navigator.push(context, MaterialPageRoute(builder: (context){
-                                          return ArtistDetailScreen();
-                                        }));
-                                      },
-                                    );
-                                  }),
-                            ],
-                          );
-
-                          } else if (state is SongError) {
-                            return Center(child: Text(state.message));
+            return ListView(
+              physics: BouncingScrollPhysics(),
+              children: [
+                if(topResult != null)
+                  Column(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text("Top Result", style: TextStyle(fontSize: 22, color: Colors.white)),
+                        ),
+                      ),
+                      ListTile(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(topResult.thumbnails.defaultThumbnail.url, width: 50, height: 50, fit: BoxFit.cover),
+                        ),
+                        title: topResult.resultType != "artist" ?  Text(topResult.title,style: TextStyle(color: Colors.white),): Text(topResult.artists.map((artist)=> artist["name"]).join(","),style: TextStyle(color: Colors.white),),
+                        subtitle:topResult.resultType != "artist" ?
+                        Text("${topResult.resultType == 'video' ? "song" : topResult.resultType} • ${topResult.artists.map((artist)=> artist['name']).join(",")}", style: TextStyle(color: Colors.white.withOpacity(0.7)),)
+                            : Text(topResult.resultType,style: TextStyle(color: Colors.white.withOpacity(0.7)),),
+                        onTap: (){
+                          if(topResult.resultType == "song" || topResult.resultType == "video"){
+                            final isFromAlbum = context.read<PlayerBloc>().state.isFromAlbum;
+                            if(isFromAlbum){
+                              context.read<PlayerBloc>().add(UpdateStateEvent(state: context.read<PlayerBloc>().state.copyWith(isFromAlbum: false)));
+                            }
+                            context.read<PlayerBloc>().add(PlaySongEvent(song: dartz.left(topResult)));
+                          }else if(topResult.resultType == "album"){
+                            context.read<AlbumBloc>().add(SearchAlbum(albumId: topResult.browseId));
+                            Navigator.push(context, MaterialPageRoute(builder: (context){
+                              return const AlbumScreen();
+                            }));
+                          }else if(topResult.resultType == "artist"){
+                            context.read<ArtistBloc>().add(FetchArtistEvent(artistId: topResult.browseId));
+                            Navigator.push(context, MaterialPageRoute(builder: (context){
+                              return  ArtistDetailScreen(artistId: topResult.browseId,);
+                            }));
                           }
-                          return Center(child: Column(
-                            children: [
-                              ElevatedButton(onPressed: (){
-                              context.read<PlaylistBloc>().add(FetchTrendingSongsPlaylistEvent());
-                              Navigator.push(context, MaterialPageRoute(builder: (context)=> const TrendingSongsPlaylistScreen()));
-                              }, child:Text("Trending Songs Playlist") ),
-                              ElevatedButton(onPressed: (){
-                                context.read<PlaylistBloc>().add(FetchBillboardSongsPlaylistEvent());
-                                Navigator.push(context, MaterialPageRoute(builder: (context)=> const BillboardSongsPlaylistScreen()));
-                              }, child:Text("Billboard Songs Playlist") ),
-                              ElevatedButton(onPressed: () {
-                                context.read<PlaylistBloc>().add(FetchFavouriteSongsPlaylistEvent());
-                                Navigator.pushNamed(context, Routes.favouriteSongsPlaylistScreen);
-                              }
-                                  , child: Text("Favourite Songs")),
-                              ElevatedButton(onPressed: (){
-                                context.read<PlaylistBloc>().add(FetchPlaylists());
-                                Navigator.pushNamed(context, Routes.userPlaylistScreen);
-                              }, child: Text("Playlists")),
-                              ElevatedButton(onPressed: (){
-                                context.read<PlaylistBloc>().add(FetchRecommendedSongsPlaylist());
-                               Navigator.pushNamed(context, Routes.recommendedSongsPlaylistScreen);
-                              }, child: Text("Recommended Songs")),
-                              ElevatedButton(onPressed: (){
-                                Navigator.pushNamed(context, Routes.userSearchScreen);
-                              }, child: Text("Search Users")),
-                              BlocListener<AuthBloc, AuthState>(
-    listener: (context, state) {
-     if(state is UserDataFetched){
-       final artistIds = state.user.favouriteArtists.join(",");
-       context.read<PlaylistBloc>().add(FetchSuggestedSongsOfFavouriteArtists(artistIds:artistIds ));
-     }
-    },
-    child: ElevatedButton(onPressed: (){
-                               context.read<AuthBloc>().add(FetchUserDataEvent());
-                                Navigator.push(context, MaterialPageRoute(builder: (context)=> const SuggestedSongsOfFavouriteArtistsPlaylistScreen()));
-                              }, child:Text("Suggested Songs Playlist") ),
-    )
-                            ],
-                          ));
                         },
                       ),
-                    ),
+                    ],
+                  ),
 
-                  ],
+                // Songs Section
+
+               _buildSectionHeaderWithViewAll(context, "Songs", (){
+                 context.read<SearchBloc>().add(SearchSongsRequested(query: _controller.text));
+                           Navigator.pushNamed(context, Routes.songsResultScreen);
+               }),
+
+                ListView.builder(
+                    physics: NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: songs.length <5 ? songs.length: 5,
+                    itemBuilder: (context, index) {
+
+                      final Song song = songs[index];
+                      return songWidget(context: context, song: song);
+                    }),
+
+                // Albums Section
+                if(albums.isNotEmpty) ...[
+                   _buildSectionHeaderWithViewAll(context, "Albums", (){
+
+                   }),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: SizedBox(
+                      height: 250.h,
+                      child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          shrinkWrap: true,
+                          physics: BouncingScrollPhysics(),
+                          itemCount: albums.length<5 ? albums.length : 5,
+                          itemBuilder: (context,index){
+                            final Song album = albums[index];
+                            return   GestureDetector(
+                              onTap: (){
+                                context.read<AlbumBloc>().add(SearchAlbum(albumId: album.browseId));
+                                Navigator.pushNamed(context, Routes.albumScreen);
+                              },
+                              child: Container(
+                                width: 170.w,
+                                margin: const EdgeInsets.only(right: 16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      height: 160,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        image: DecorationImage(
+                                          image: NetworkImage(album.thumbnails.highThumbnail.url),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      album.title,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      album.artists.map((artist)=> artist['name']).join(","),
+                                      style: const TextStyle(
+                                        color: Colors.white60,
+                                        fontSize: 13,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                    ),
+                  ),
+                ],
+
+                // Artists Section
+                if(artists.isNotEmpty) ...[
+                  _buildSectionHeaderWithViewAll(context, "Artists", (){
+
+                  }),
+          Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SizedBox(
+          height: 250.h,
+          child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          shrinkWrap: true,
+          physics: BouncingScrollPhysics(),
+          itemCount: artists.length<5 ? artists.length : 5,
+          itemBuilder: (context,index){
+          final Song artist = artists[index];
+          return   GestureDetector(
+          onTap: (){
+
+          context.read<ArtistBloc>().add(FetchArtistEvent(artistId: artist.browseId));
+          Navigator.pushNamed(context, Routes.artistDetailScreen,arguments: {"artistId": artist.browseId});
+          },
+          child: Container(
+          width: 170.w,
+          margin: const EdgeInsets.only(right: 16),
+          child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+          Container(
+          height: 160,
+          decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          image: DecorationImage(
+          image: NetworkImage(artist.thumbnails.highThumbnail.url),
+          fit: BoxFit.cover,
+          ),
+          ),
+          ),
+          const SizedBox(height: 12),
+
+          Text(
+          artist.artists.map((artist)=> artist['name']).join(","),
+          style: const TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          ),
+
+          ],
+          ),
+          ),
+          );
+          }),
+          ),
+          ),
+                ],
+              ],
+            );
+          } else if (state is SongError) {
+            return Center(child: Text(state.message));
+          }
+          return const SizedBox();
+        },
+      );
+    } else if (_isTyping && (_filteredRecentSearches.isNotEmpty || _suggestions.isNotEmpty)) {
+      return _buildSuggestions();
+    } else {
+      return _buildRecentSearches();
+    }
+  }
+  Widget _buildSectionHeaderWithViewAll(BuildContext context, String title, VoidCallback onViewAllTap) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 19,
+
+            ),
+          ),
+          GestureDetector(
+            onTap: onViewAllTap,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Text(
+                'VIEW ALL',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-      //
-            BlocBuilder<PlayerBloc, Player>(
-        builder: (context, state) {
-
-     if(state is PlayerState) {
-
-    if(state.currentSong != null){
-     return Positioned.fill(
-
-       child: DraggableScrollableSheet(
-         controller: _scrollableController,
-         minChildSize: 0.13,
-         maxChildSize: 1.0,
-         initialChildSize: 0.13,
-         snap: true,
-         snapSizes: const [0.13, 1.0],
-         builder: (context, scrollController) {
-           return GestureDetector(
-
-             onTap: () {
-               if (_scrollableController.size == 0.13) {
-                 _expandBox();
-               }
-             },
-
-             child: Container(
-               color: Colors.white,
-
-               child: ListView(
-                 controller: scrollController,
-                 children: [
-
-
-                   BlocBuilder<CurrentSongWidgetBloc, CurrentSongWidgetState>(
-                     builder: (context, state) {
-                       if (state is CurrentSongWidgetCollapseState) {
-                         return const CollapsedCurrentSong();
-                       } else if (state is CurrentSongWidgetExpandState) {
-                         return  ExpandedCurrentSong();
-                       }
-                       return const SizedBox();
-                     },
-                   ),
-
-                 ],
-               ),
-             ),
-           );
-         },
-       ),
-     );
-     }}
-         return const SizedBox();
-        },
+          ),
+        ],
       ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(onPressed: (){
-          Navigator.of(context).push(MaterialPageRoute(builder: (context){
-            return AppWithPlayer(child: DownloadScreen());
-          }));
-        }),
-
-      ),
-  ),
-);
+    );
   }
 }

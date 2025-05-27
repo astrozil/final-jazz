@@ -1,6 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:jazz/core/app_color.dart';
+import 'package:jazz/core/widgets/song_widget.dart';
 import 'package:jazz/features/search_feature/domain/entities/song.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/search/search_bloc.dart';
 import 'package:jazz/features/stream_feature/presentation/bloc/playerBloc/player_bloc.dart';
@@ -12,13 +14,26 @@ class SongsResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Songs")),
+      backgroundColor: AppColors.primaryBackgroundColor,
+      appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: GestureDetector(
+            onTap: (){
+              Navigator.pop(context);
+            },
+            child: const Icon(Icons.arrow_back_ios_new_outlined,color: Colors.white,),
+
+          ),
+          backgroundColor: AppColors.primaryBackgroundColor,
+          title: const Text("Songs",style: TextStyle(color: Colors.white),)),
       body: BlocBuilder<SearchBloc, SearchState>(
         builder: (context, state) {
           if (state is SearchLoading) {
-            return const Center(child: CircularProgressIndicator());
+
+            return  const Center(child: CircularProgressIndicator(color: Colors.white,));
           } else if (state is SearchLoaded) {
             final List<Song> songs = state.songs;
+            print(songs);
             if (songs.isEmpty) {
               return const Center(child: Text("No songs found."));
             }
@@ -26,27 +41,7 @@ class SongsResultScreen extends StatelessWidget {
               itemCount: songs.length,
               itemBuilder: (context, index) {
                 final song = songs[index];
-                return ListTile(
-                  leading: song.thumbnails.defaultThumbnail.url.isNotEmpty
-                      ? Image.network(
-                    song.thumbnails.defaultThumbnail.url,
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                  )
-                      : const Icon(Icons.music_note),
-                  title: Text(song.title),
-                  subtitle: Text( song.artists
-                      .map((artist) => artist['name'] as String)
-                      .join(', '),),
-                  onTap: () {
-                    final isFromAlbum = context.read<PlayerBloc>().state.isFromAlbum;
-                    if(isFromAlbum){
-                      context.read<PlayerBloc>().add(UpdateStateEvent(state: context.read<PlayerBloc>().state.copyWith(isFromAlbum: false)));
-                    }
-                    context.read<PlayerBloc>().add(PlaySongEvent(song: left(song)));
-                  },
-                );
+                return songWidget(context: context, song: song,);
               },
             );
           } else if (state is SearchError) {

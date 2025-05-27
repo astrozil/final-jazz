@@ -5,11 +5,13 @@
   import 'package:equatable/equatable.dart';
   import 'package:jazz/features/download_feature/domain/entities/download_request.dart';
   import 'package:jazz/features/download_feature/domain/usecases/download_songs.dart';
+import 'package:jazz/features/download_feature/presentation/bloc/downloadedSongsBloc/downloaded_songs_bloc.dart';
 
   part 'download_event.dart';
   part 'download_state.dart';
 
   class DownloadBloc extends Bloc<DownloadEvent, DownloadState> {
+    final DownloadedSongsBloc downloadedSongsBloc;
     final DownloadSongs downloadSongs;
     final Map<String,CancelToken> _cancelTokens = {};
     final Queue<DownloadRequest> _downloadQueue = Queue<DownloadRequest>();
@@ -17,7 +19,7 @@
     bool _isDownloading = false;
     bool _isPaused = false;
 
-    DownloadBloc(this.downloadSongs) : super(DownloadInitial()) {
+    DownloadBloc(this.downloadSongs,{required this.downloadedSongsBloc}) : super(DownloadInitial()) {
       on<DownloadSongEvent>(_downloadSongsEvent);
       on<PauseDownloadEvent>(_pauseDownloadEvent);
       on<ResumeDownloadEvent>(_resumeDownloadEvent);
@@ -32,6 +34,7 @@
       if (!_isDownloading  && !_isPaused) {
         await _processNextRequest(emit);
       }
+
     }
 
     Future<void> _processNextRequest(Emitter<DownloadState> emit,{int alreadyDownloadedBytes = 0}) async {
@@ -73,6 +76,8 @@
         if (!emit.isDone && !_isPaused) {
           _downloadedBytes.remove(videoID);
           emit(DownloadFinished(_downloadQueue.toList()));
+          downloadedSongsBloc.add(GetDownloadedSongsEvent());
+
         }
       },
     );

@@ -37,12 +37,14 @@ import 'package:jazz/features/auth_feature/domain/use_case/friend_request_use_ca
 import 'package:jazz/features/auth_feature/domain/use_case/friend_request_use_cases/reject_friend_request_use_case.dart';
 import 'package:jazz/features/auth_feature/domain/use_case/friend_request_use_cases/send_friend_request_use_case.dart';
 import 'package:jazz/features/auth_feature/domain/use_case/friend_request_use_cases/unfriend_use_case.dart';
+import 'package:jazz/features/auth_feature/domain/use_case/notification_use_cases/delete_user_notification_use_case.dart';
 import 'package:jazz/features/auth_feature/domain/use_case/notification_use_cases/get_user_notifications_use_case.dart';
 import 'package:jazz/features/auth_feature/domain/use_case/notification_use_cases/mark_as_read_use_case.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/friend_request_bloc/friend_request_bloc.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/notification_bloc/notification_bloc.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/search_users_bloc/search_users_bloc.dart';
+import 'package:jazz/features/auth_feature/presentation/bloc/user_bloc/user_bloc.dart';
 import 'package:jazz/features/download_feature/data/datasources/download_datasource.dart';
 import 'package:jazz/features/download_feature/data/datasources/downloadedSongsMetadataDatasource.dart';
 import 'package:jazz/features/download_feature/data/repositories_impl/download_repository_impl.dart';
@@ -241,8 +243,9 @@ final di = GetIt.instance;
    di.registerLazySingleton<ResetPasswordUseCase>(()=> ResetPasswordUseCase(authRepository: di<AuthRepository>()));
    di.registerLazySingleton<GetSuggestionsUseCase>(()=> GetSuggestionsUseCase(songRepository: di<SongRepository>()));
    di.registerLazySingleton<UpdateEmailUseCase>(()=> UpdateEmailUseCase(di<AuthRepository>()));
+   di.registerLazySingleton<DeleteUserNotificationUseCase>(()=> DeleteUserNotificationUseCase(notificationRepository: di<NotificationRepository>()));
    // Register Blocs
-   di.registerLazySingleton<DownloadBloc>(() => DownloadBloc(di<DownloadSongs>()));
+   di.registerLazySingleton<DownloadBloc>(() => DownloadBloc(di<DownloadSongs>(),downloadedSongsBloc: di<DownloadedSongsBloc>()));
 
    di.registerLazySingleton<SongBloc>(() => SongBloc(di<Search>()));
    di.registerLazySingleton<CurrentSongWidgetBloc>(() => CurrentSongWidgetBloc());
@@ -286,7 +289,8 @@ final di = GetIt.instance;
     changePasswordUseCase: di<ChangePasswordUseCase>(),
     getFriendsUseCase: di<GetFriendsUseCase>(),
     resetPasswordUseCase: di<ResetPasswordUseCase>(),
-    updateEmailUseCase: di<UpdateEmailUseCase>()
+    updateEmailUseCase: di<UpdateEmailUseCase>(),
+    userBloc: di<UserBloc>()
    ));
    di.registerLazySingleton<SearchUsersBloc>(()=> SearchUsersBloc(di<SearchUsersUseCase>()));
    di.registerLazySingleton<FriendRequestBloc>(()=> FriendRequestBloc(
@@ -301,7 +305,7 @@ final di = GetIt.instance;
 
    ));
    di.registerLazySingleton<NotificationBloc>(()=> NotificationBloc(
-       di<GetUserNotificationsUseCase>(), di<MarkAsReadUseCase>()));
+       di<GetUserNotificationsUseCase>(), di<MarkAsReadUseCase>(), di<DeleteUserNotificationUseCase>()));
    di.registerLazySingleton<SharedSongBloc>(()=> SharedSongBloc(
        di<ShareSong>(),
        di<GetReceivedSharedSongs>(),
@@ -309,4 +313,5 @@ final di = GetIt.instance;
        di<MarkSharedSongAsViewed>()));
     di.registerLazySingleton<SearchSuggestionBloc>(()=> SearchSuggestionBloc(getSuggestionsUseCase: di<GetSuggestionsUseCase>()));
     di.registerLazySingleton<InternetConnectionBloc>(()=> InternetConnectionBloc());
+    di.registerLazySingleton<UserBloc>(()=> UserBloc());
  }

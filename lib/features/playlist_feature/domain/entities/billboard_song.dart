@@ -16,7 +16,7 @@ class BillboardSong extends RelatedSong {
     required super.song,
   });
 
-  factory BillboardSong.fromJson(Map<String, dynamic> json) {
+  factory BillboardSong.fromJson(Map<dynamic, dynamic> json) {
     final baseSong = Song.fromJson(json['ytmusic_result']);
     return BillboardSong(
       url: "",

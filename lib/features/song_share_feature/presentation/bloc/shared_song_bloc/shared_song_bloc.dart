@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:jazz/features/song_share_feature/domain/entities/shared_song.dart';
 import 'package:jazz/features/song_share_feature/domain/use_cases/get_received_shared_songs.dart';
 import 'package:jazz/features/song_share_feature/domain/use_cases/get_sent_shared_songs.dart';
@@ -65,7 +66,7 @@ class SharedSongBloc extends Bloc<SharedSongEvent, SharedSongState> {
     emit(SharedSongLoading());
     _receivedSongsSubscription?.cancel();
     _receivedSongsSubscription = _getReceivedSharedSongs
-        .execute(_currentUserId)
+        .execute(FirebaseAuth.instance.currentUser!.uid)
         .listen(
           (songs) => add(_ReceivedSharedSongsUpdated(songs)),
       onError: (error) => add(_SharedSongError(error.toString())),

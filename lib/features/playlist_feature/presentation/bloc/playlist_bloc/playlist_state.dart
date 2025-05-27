@@ -16,6 +16,8 @@ final class PlaylistLoaded extends PlaylistState {
   final List<RelatedSong> songsFromSongIdList;
   final Map userPlaylist;
   final bool hasReachedMax;
+  final bool removedFromFavourite;
+  final bool addedToFavourite;
 
   PlaylistLoaded({
     required this.isLoading,
@@ -28,6 +30,8 @@ final class PlaylistLoaded extends PlaylistState {
     required this.userPlaylists,
     required this.userPlaylist,
     this.hasReachedMax = false,
+    this.addedToFavourite = false,
+    this.removedFromFavourite = false,
   });
   PlaylistLoaded copyWith({
     bool? isLoading,
@@ -40,6 +44,8 @@ final class PlaylistLoaded extends PlaylistState {
     List<Map>? userPlaylists,
     Map? userPlaylist,
     bool? hasReachedMax,
+    bool? removedFromFavourite,
+    bool? addedToFavourite
   }) {
     return PlaylistLoaded(
       isLoading: isLoading ?? this.isLoading,
@@ -54,8 +60,13 @@ final class PlaylistLoaded extends PlaylistState {
       userPlaylists: userPlaylists ?? this.userPlaylists,
       userPlaylist: userPlaylist ?? this.userPlaylist,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
+      removedFromFavourite: removedFromFavourite?? this.removedFromFavourite,
+      addedToFavourite: addedToFavourite ?? this.addedToFavourite
     );
   }
+
+}
+final class FavouriteSongLoading extends PlaylistState{
 
 }
 final class AddedFavouriteSong extends PlaylistState{

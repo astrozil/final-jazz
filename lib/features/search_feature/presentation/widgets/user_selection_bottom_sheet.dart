@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:jazz/core/app_color.dart';
 import 'package:jazz/features/auth_feature/domain/entities/user.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc.dart';
 import 'package:jazz/features/search_feature/domain/entities/song.dart';
@@ -105,8 +107,8 @@ class _UserSelectionBottomSheetState extends State<UserSelectionBottomSheet> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration:  const BoxDecoration(
+        color: Color.fromRGBO(37, 39, 40, 1),
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: SafeArea(
@@ -156,22 +158,23 @@ class _UserSelectionBottomSheetState extends State<UserSelectionBottomSheet> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+           SizedBox(width: 80.w,),
           const Text(
-            'Select Users',
+            'Send to',
             style: TextStyle(
+              color: Colors.white,
               fontSize: 18,
-              fontWeight: FontWeight.bold,
+
             ),
           ),
-          const Spacer(),
+
           TextButton(
             onPressed: () {
-              setState(() {
-                _selectedUserIds.clear();
-              });
+              Navigator.pop(context);
             },
-            child: const Text('Clear All'),
+            child:  Text('Cancel',style: TextStyle(color: Colors.white.withOpacity(0.8)),),
           ),
         ],
       ),
@@ -181,25 +184,31 @@ class _UserSelectionBottomSheetState extends State<UserSelectionBottomSheet> {
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: 'Search users...',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: _isSearching
-              ? IconButton(
-            icon: const Icon(Icons.clear),
-            onPressed: () {
-              _searchController.clear();
-            },
-          )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: TextField(
+          style: const TextStyle(color: Colors.white),
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search friends',
+
+            prefixIcon:  Icon(Icons.search,color: Colors.white.withOpacity(0.7),),
+            hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+            suffixIcon: _isSearching
+                ? IconButton(
+              icon: const Icon(Icons.clear,color: Colors.white,),
+              onPressed: () {
+                _searchController.clear();
+              },
+            )
+                : null,
+
+            border: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            filled: true,
+            fillColor: const Color.fromRGBO(51, 51, 52, 1),
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
-          filled: true,
-          fillColor: Colors.grey[100],
         ),
       ),
     );
@@ -211,7 +220,7 @@ class _UserSelectionBottomSheetState extends State<UserSelectionBottomSheet> {
         if (state is AuthLoading) {
           return const Expanded(
             child: Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: Colors.white,),
             ),
           );
         } else if (state is FriendsLoaded) {
@@ -227,11 +236,11 @@ class _UserSelectionBottomSheetState extends State<UserSelectionBottomSheet> {
                     const SizedBox(height: 16),
                     Text(
                       _isSearching
-                          ? 'No users match your search'
+                          ? "No friends found"
                           : 'No friends found',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
-                        color: Colors.grey[600],
+                        color: Colors.white,
                       ),
                     ),
                   ],
@@ -287,9 +296,9 @@ class _UserSelectionBottomSheetState extends State<UserSelectionBottomSheet> {
     return CheckboxListTile(
       title: Text(
         user.name,
-        style: const TextStyle(fontWeight: FontWeight.w500),
+        style: const TextStyle(color: Colors.white),
       ),
-      subtitle: Text(user.email),
+
       secondary: Hero(
         tag: 'user_avatar_${user.id}',
         child: CircleAvatar(
@@ -297,14 +306,14 @@ class _UserSelectionBottomSheetState extends State<UserSelectionBottomSheet> {
               ? NetworkImage(user.profilePictureUrl!)
               : null,
           child: user.profilePictureUrl == null
-              ? Text(user.name.isNotEmpty ? user.name[0].toUpperCase() : '?')
+              ? Text(user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',)
               : null,
         ),
       ),
       value: _selectedUserIds.contains(user.id),
       onChanged: (bool? value) => _handleUserSelection(user, value),
-      activeColor: Theme.of(context).primaryColor,
-      checkColor: Colors.white,
+      activeColor: Colors.white,
+      checkColor: Colors.black,
       controlAffinity: ListTileControlAffinity.trailing,
     );
   }
@@ -313,15 +322,9 @@ class _UserSelectionBottomSheetState extends State<UserSelectionBottomSheet> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: const Offset(0, -2),
-          ),
-        ],
+      decoration: const BoxDecoration(
+        color: Color.fromRGBO(37, 39, 40, 1),
+
       ),
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
@@ -333,26 +336,28 @@ class _UserSelectionBottomSheetState extends State<UserSelectionBottomSheet> {
                 ? null
                 : () => _confirmSelection(allUsers),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
               padding: const EdgeInsets.symmetric(vertical: 12.0),
-              disabledBackgroundColor: Colors.grey[300],
+              disabledBackgroundColor: const Color.fromRGBO(59, 61, 62, 1),
+              disabledForegroundColor: Colors.white.withOpacity(0.3)
             ),
             child: isLoading
                 ? const SizedBox(
               height: 20,
               width: 20,
+
               child: CircularProgressIndicator(
                 strokeWidth: 2,
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               ),
             )
-                : Text(
-              'Confirm Selection (${_selectedUserIds.length})',
-              style: const TextStyle(fontSize: 16),
+                : const Text(
+              'Send',
+              style:  TextStyle(fontSize: 16,),
             ),
           );
         },

@@ -8,13 +8,14 @@ class CheckIfDownloadedEvent extends DownloadedOrNotEvent{
   final String title;
   final String artist;
 
-  CheckIfDownloadedEvent(this.videoID,this.title,this.artist);
+  CheckIfDownloadedEvent(this.videoID,this.title,this.artist,);
 }
 
 class DeleteDownloadedSongEvent extends DownloadedOrNotEvent{
+  final String? path;
   final String videoID;
   final String title;
   final String artist;
 
-  DeleteDownloadedSongEvent(this.videoID,this.title,this.artist);
+  DeleteDownloadedSongEvent(this.videoID,this.title,this.artist,{this.path});
 }

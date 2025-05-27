@@ -4,4 +4,5 @@ abstract class NotificationRepository {
   Future<void> createNotification(Notification notification);
   Future<void> markAsRead(String notificationId);
   Stream<List<Notification>> getUserNotifications();
+  Future<void> deleteNotification({required String notificationId});
 }

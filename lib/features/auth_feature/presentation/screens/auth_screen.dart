@@ -27,12 +27,12 @@ class _AuthScreenState extends State<AuthScreen> {
             if(state.isNewUser){
               Navigator.pushReplacementNamed(context, Routes.setNameScreen);
             }else {
-              Navigator.pushReplacementNamed(context, Routes.searchScreen);
+              Navigator.pushReplacementNamed(context, Routes.homeScreen);
             }
           }else if(state is IsLoggedIn){
             bool isLoggedIn = state.isLoggedIn;
             if(isLoggedIn){
-              Navigator.pushReplacementNamed(context, Routes.searchScreen);
+              Navigator.pushReplacementNamed(context, Routes.homeScreen);
             }
           }
         },

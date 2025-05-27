@@ -13,10 +13,39 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
+  final Set<int> _selectedNotifications = {};
+
   @override
   void initState() {
     context.read<NotificationBloc>().add(GetUserNotificationsEvent());
     super.initState();
+  }
+
+
+
+  void _deleteNotification(dynamic id) {
+    final intId = id is String ? int.parse(id) : id as int;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Delete'),
+        content: const Text('Are you sure you want to delete this notification?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<NotificationBloc>().add(DeleteNotification(notificationId: id));
+              Navigator.of(context).pop();
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -31,7 +60,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
           'Notifications',
           style: TextStyle(
             color: Colors.white,
-
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -53,21 +81,35 @@ class _NotificationScreenState extends State<NotificationScreen> {
               itemCount: state.notifications.length,
               itemBuilder: (context, index) {
                 final notification = state.notifications[index];
-                return NotificationCard(
-                  notification: notification,
-                  onTap: () {
-                    // Mark as read
-                    context.read<NotificationBloc>().add(
-                      MarkNotificationAsReadEvent(notification.id),
-                    );
+                // Convert to int for comparison if needed
 
-                    // Navigate based on notification type
-                    if (notification.type == 'friend_request') {
-                      Navigator.pushNamed(context, Routes.friendRequestsScreen);
-                    } else if (notification.type == 'request_accepted') {
-                      // Navigate to user profile or friends list
-                    }
+                final isSelected = _selectedNotifications.contains(notification.id);
+
+                return GestureDetector(
+
+                  onTap: () {
+
+
+                      context.read<NotificationBloc>().add(
+                        MarkNotificationAsReadEvent(notification.id),
+                      );
+
+                      if (notification.type == 'friend_request') {
+                        Navigator.pushNamed(context, Routes.friendRequestsScreen);
+                      } else if (notification.type == 'request_accepted') {
+                        // Navigate to user profile or friends list
+                      }
+
                   },
+                  child: Container(
+                    color: isSelected ? Colors.blue.withOpacity(0.3) : Colors.transparent,
+                    child: NotificationCard(
+                      notification: notification,
+                      onTap: () {
+
+                      },
+                    ),
+                  ),
                 );
               },
             );
@@ -83,7 +125,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
           return _buildEmptyState();
         },
       ),
-
     );
   }
 
@@ -93,7 +134,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-
             padding: const EdgeInsets.all(12),
             child: const Icon(
               Icons.notifications_none_outlined,

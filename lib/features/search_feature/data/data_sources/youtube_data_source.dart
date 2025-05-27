@@ -49,38 +49,7 @@ class YouTubeDataSource {
       List<Song> songs = [];
       for (var video in rawData) {
         songs.add(
-          Song(
-            url: "https://www.youtube.com/watch?v=${video['videoId']}",
-            title: video['title'] ?? "",
-            artists: video['artists'] != null
-                ? video['artists'][0]['name']
-                : video['artist'] ?? '',
-            id: video['videoId'] ?? "",
-            duration: video['duration'] ?? "",
-            album: video['album'] ?? {},
-
-            resultType: video['resultType']?? "",
-            category: video['category'] ?? "",
-
-            browseId: video['browseId'] ?? '',
-            thumbnails: YtThumbnails(
-              defaultThumbnail: YtThumbnail(
-                url: video['thumbnails'][0]['url'] ?? "",
-                width: video['thumbnails'][0]['width'] ?? 0,
-                height: video['thumbnails'][0]['height'] ?? 0,
-              ),
-              mediumThumbnail: YtThumbnail(
-                url: video['thumbnails'][0]['url'] ?? "",
-                width: video['thumbnails'][0]['width'] ?? 0,
-                height: video['thumbnails'][0]['height'] ?? 0,
-              ),
-              highThumbnail: YtThumbnail(
-                url: video['thumbnails'][0]['url'] ?? "",
-                width: video['thumbnails'][0]['width'] ?? 0,
-                height: video['thumbnails'][0]['height'] ?? 0,
-              ),
-            ),
-          ),
+        Song.fromJson(video),
         );
       }
       return songs;

@@ -8,6 +8,8 @@ class DownloadedSong extends Equatable {
   final String album;
   final Uint8List? image;
   final File songFile;
+  final String id;
+  final String songSavedPath;
 
   DownloadedSong({
     required this.songName,
@@ -15,9 +17,11 @@ class DownloadedSong extends Equatable {
     required this.album,
     required this.artist,
     required this.songFile,
+    required this.id,
+    required this.songSavedPath
   });
 
   @override
-  List<Object?> get props => [songName, artist, album, songFile.path];
+  List<Object?> get props => [songName, artist, album, songFile.path,id];
 }
  

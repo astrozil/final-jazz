@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:jazz/core/app_color.dart';
 import 'package:jazz/core/routes.dart';
 import 'package:jazz/features/internet_connection_checker/presentation/bloc/internet_connection_checker_bloc.dart';
 import 'package:jazz/features/internet_connection_checker/presentation/bloc/internet_connection_checker_event.dart';
@@ -18,22 +19,24 @@ class InternetConnectionWrapper extends StatelessWidget {
       builder: (context, state) {
         if (state is InternetConnectionLoading) {
           return Scaffold(
+            backgroundColor: AppColors.primaryBackgroundColor,
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Custom loading animation using Lottie
-
-                  const SizedBox(height: 20),
+                  const CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                  const SizedBox(height: 24),
                   Text(
                     "Checking connection...",
-                    style: GoogleFonts.montserrat(
+                    style: GoogleFonts.inter(
                       fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFFB3B3B3),
                     ),
-                  ).animate()
-                      .fadeIn(duration: 500.ms)
-                      .slideY(begin: 0.5, end: 0),
+                  ),
                 ],
               ),
             ),
@@ -42,146 +45,115 @@ class InternetConnectionWrapper extends StatelessWidget {
           return child;
         } else if (state is InternetConnectionUnavailable) {
           return Scaffold(
-            body: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.indigo.shade900,
-                    Colors.indigo.shade700,
-                  ],
-                ),
-              ),
-              child: SafeArea(
+            backgroundColor: AppColors.primaryBackgroundColor,
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // No internet animation
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E1E),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF2A2A2A),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.wifi_off_outlined,
+                        color: Color(0xFF666666),
+                        size: 32,
+                      ),
+                    ),
 
-
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 32),
 
                     Text(
                       "No Internet Connection",
-                      style: GoogleFonts.raleway(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                      style: GoogleFonts.inter(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFFFFFFFF),
                       ),
-                    ).animate()
-                        .fadeIn(delay: 300.ms, duration: 500.ms)
-                        .slideY(begin: 0.3, end: 0),
+                      textAlign: TextAlign.center,
+                    ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
 
                     Text(
                       "Please check your connection and try again",
-                      style: GoogleFonts.roboto(
-                        fontSize: 16,
-                        color: Colors.white70,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF888888),
+                        height: 1.4,
                       ),
                       textAlign: TextAlign.center,
-                    ).animate()
-                        .fadeIn(delay: 500.ms, duration: 500.ms),
+                    ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 48),
 
                     // Try Again Button
-                    Container(
-                      width: 200,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(25),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
                       child: ElevatedButton(
                         onPressed: () {
                           context.read<InternetConnectionBloc>().add(RetryInternetConnection());
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
-                          foregroundColor: Colors.indigo.shade900,
+                          foregroundColor: const Color(0xFF000000),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.refresh),
-                            const SizedBox(width: 8),
-                            Text(
-                              "Try Again",
-                              style: GoogleFonts.montserrat(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          "Try Again",
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ).animate()
-                        .fadeIn(delay: 700.ms, duration: 500.ms)
-                        .slideY(begin: 0.5, end: 0),
+                    ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
                     // Go to Downloads Button
-                    Container(
-                      width: 200,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(25),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
                       child: OutlinedButton(
-
-
                         onPressed: () {
                           Navigator.pushNamed(context, Routes.downloadedSongsScreen);
                         },
                         style: OutlinedButton.styleFrom(
-
-                          side: const BorderSide(color: Colors.white, width: 2),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
+                          side: const BorderSide(
+                            color: Color(0xFF2A2A2A),
+                            width: 1,
                           ),
-                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          foregroundColor: const Color(0xFFFFFFFF),
+                          backgroundColor: Colors.transparent,
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.download_done),
-                            const SizedBox(width: 8),
-                            Text(
-                              "TO Downloads",
-                              style: GoogleFonts.montserrat(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          "View Downloads",
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ).animate()
-                        .fadeIn(delay: 900.ms, duration: 500.ms)
-                        .slideY(begin: 0.5, end: 0),
+                    ),
                   ],
                 ),
               ),
@@ -190,23 +162,35 @@ class InternetConnectionWrapper extends StatelessWidget {
         }
 
         return Scaffold(
+          backgroundColor: const Color(0xFF121212),
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.signal_wifi_off,
-                  size: 80,
-                  color: Colors.grey,
-                ).animate()
-                    .fadeIn(duration: 500.ms)
-                    .scale(),
-                const SizedBox(height: 20),
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E1E),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF2A2A2A),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.signal_wifi_off_outlined,
+                    size: 24,
+                    color: Color(0xFF666666),
+                  ),
+                ),
+                const SizedBox(height: 24),
                 Text(
                   "Connection Error",
-                  style: GoogleFonts.raleway(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFFFFFFFF),
                   ),
                 ),
               ],

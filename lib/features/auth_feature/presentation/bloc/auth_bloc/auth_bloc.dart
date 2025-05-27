@@ -15,6 +15,7 @@ import 'package:jazz/features/auth_feature/domain/use_case/auth_use_cases/sign_i
 import 'package:jazz/features/auth_feature/domain/use_case/auth_use_cases/sign_up_usecase.dart';
 import 'package:jazz/features/auth_feature/domain/use_case/auth_use_cases/update_email_use_case.dart';
 import 'package:jazz/features/auth_feature/domain/use_case/auth_use_cases/update_user_profile_use_case.dart';
+import 'package:jazz/features/auth_feature/presentation/bloc/user_bloc/user_bloc.dart';
 import 'package:meta/meta.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -33,6 +34,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final GetFriendsUseCase getFriendsUseCase;
   final ResetPasswordUseCase resetPasswordUseCase;
  final UpdateEmailUseCase updateEmailUseCase;
+ final UserBloc userBloc;
 
     StreamSubscription? friendsSubscription;
   AuthBloc( {
@@ -46,7 +48,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.changePasswordUseCase,
     required this.getFriendsUseCase,
     required this.resetPasswordUseCase,
-    required this.updateEmailUseCase
+    required this.updateEmailUseCase,
+    required this.userBloc
   }) : super(AuthInitial()) {
     on<SignUpEvent>((event, emit) async {
       emit(AuthLoading());
@@ -414,6 +417,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
 
             await updateUserProfileUseCase(updatedUser);
+           userBloc.add(FetchFavouriteArtists());
+
             emit(UserDataUpdated());
           } else {
             throw Exception("User profile not found");
@@ -483,6 +488,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
               final user = AppUser.fromJson(docSnapshot.data()!);
 
               emit(UserDataFetched(user: user));
+              emit(FavouriteSongsFetched(favouriteSongs: user.favouriteSongs));
             }catch(e){
               print(e.toString());
             }

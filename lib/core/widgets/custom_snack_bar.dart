@@ -4,9 +4,10 @@ class CustomSnackBar {
   // General purpose method with customizable parameters
   static SnackBar show({
     required String message,
-    IconData icon = Icons.check_circle,
+    IconData? icon, // Make icon nullable, no default
     Color iconColor = Colors.greenAccent,
     Color backgroundColor = const Color(0xFF222831),
+    Color messageColor = Colors.white,
     Duration duration = const Duration(seconds: 3),
     double elevation = 6,
     CrossAxisAlignment crossAxisAlignment = CrossAxisAlignment.center,
@@ -15,14 +16,16 @@ class CustomSnackBar {
       content: Row(
         crossAxisAlignment: crossAxisAlignment,
         children: [
-          Icon(icon, color: iconColor, size: 22),
-          const SizedBox(width: 12),
+          if (icon != null) ...[
+            Icon(icon, color: iconColor, size: 22),
+            const SizedBox(width: 12),
+          ],
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
+              style: TextStyle(
+                color: messageColor,
+
               ),
             ),
           ),

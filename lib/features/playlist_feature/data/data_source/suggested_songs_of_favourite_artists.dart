@@ -20,7 +20,9 @@ class SuggestedSongsOfFavouriteArtistsDataSource {
         queryParameters: {'artists': artistIds},
       );
       if (response.statusCode == 200) {
+
         final result = response.data;
+
         for (var song in result) {
           mixSongs.add(RelatedSong(url: "", song: Song(
             url: song['url'] as String? ??
@@ -35,10 +37,7 @@ class SuggestedSongsOfFavouriteArtistsDataSource {
             resultType: song['resultType'] as String? ?? "",
             category: song['category'] as String? ?? "",
             browseId: song['browseId'] as String? ?? "",
-            thumbnails: YtThumbnails(
-                defaultThumbnail: YtThumbnail(url: song['thumbnails'][0]['url'], width: song['thumbnails'][0]['width'], height: song['thumbnails'][0]['height']),
-                mediumThumbnail: YtThumbnail(url: song['thumbnails'][0]['url'], width: song['thumbnails'][0]['width'], height: song['thumbnails'][0]['height']),
-                highThumbnail: YtThumbnail(url: song['thumbnails'][0]['url'], width: song['thumbnails'][0]['width'], height: song['thumbnails'][0]['height'])),
+            thumbnails:  YtThumbnails.fromJson(song['thumbnails']),
             album: song['album'] != null?  song['album'] is Map ? Map<dynamic, dynamic>.from(song['album']) : null : null,
             duration: song['duration'] as String? ?? "",
           )));

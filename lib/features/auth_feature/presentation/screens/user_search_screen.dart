@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:jazz/core/app_color.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/friend_request_bloc/friend_request_bloc.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/search_users_bloc/search_users_bloc.dart';
 import 'package:lottie/lottie.dart';
@@ -19,16 +20,24 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.primaryBackgroundColor,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
-              floating: true,
+              leading: GestureDetector(
+                onTap: (){
+                  Navigator.pop(context);
+
+                },
+                child: Icon(Icons.arrow_back_ios_new_outlined,color: Colors.white,),
+              ),
+              backgroundColor: AppColors.primaryBackgroundColor,
               pinned: true,
               expandedHeight: 120.0,
               flexibleSpace: FlexibleSpaceBar(
                 title: Text('Search Users', style: TextStyle(color: Colors.black)),
-                background: Container(color: Colors.white),
+                background: Container(color: AppColors.primaryBackgroundColor),
               ),
               bottom: PreferredSize(
                 preferredSize: Size.fromHeight(60),
@@ -56,21 +65,13 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                 if (state is SearchUsersLoading) {
                   return SliverFillRemaining(
                     child: Center(
-                      child: Lottie.network(
-                        'https://assets5.lottiefiles.com/packages/lf20_qjosmr4w.json',
-                        width: 200,
-                        height: 200,
-                      ),
+                      child: CircularProgressIndicator(color: Colors.white,)
                     ),
                   );
                 } else if (state is SearchUsersLoading) {
                   return SliverFillRemaining(
                     child: Center(
-                      child: Lottie.network(
-                        'https://assets3.lottiefiles.com/packages/lf20_usmfx6bp.json',
-                        width: 100,
-                        height: 100,
-                      ),
+                      child: CircularProgressIndicator(color: Colors.white,)
                     ),
                   );
                 } else if (state is SearchUsersSuccess) {
@@ -81,23 +82,19 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                         return AnimatedContainer(
                           duration: Duration(milliseconds: 300),
                           curve: Curves.easeInOut,
+                          padding: EdgeInsets.symmetric(vertical: 16),
                           margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.secondaryBackgroundColor,
                             borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                spreadRadius: 1,
-                                blurRadius: 5,
-                                offset: Offset(0, 3),
-                              ),
-                            ],
+
                           ),
                           child: ListTile(
                             leading: Hero(
+
                               tag: 'user_avatar_${user.id}',
                               child: CircleAvatar(
+                                backgroundColor: Colors.white,
                                 backgroundImage: user.profilePictureUrl != null
                                     ? NetworkImage(user.profilePictureUrl!)
                                     : null,
@@ -106,11 +103,9 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                                     : null,
                               ),
                             ),
-                            title: Text(user.name, style: TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(user.email),
-                            onTap: () {
-                              // Handle user selection
-                            },
+                            title: Text(user.name, style: TextStyle(color: Colors.white)),
+
+
                             trailing: BlocBuilder<FriendRequestBloc, FriendRequestState>(
                               builder: (context, friendRequestState) {
                                 // Debug print should be removed in production code
@@ -123,10 +118,13 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                                   // Logic error: If requests is empty, this loop won't execute and no UI will be returned
                                   if (requests.isEmpty) {
                                     return ElevatedButton(
+                                     style: ElevatedButton.styleFrom(
+                                       backgroundColor: Colors.white
+                                     ),
                                       onPressed: () {
                                         context.read<FriendRequestBloc>().add(SendFriendRequestEvent(user.id));
                                       },
-                                      child: const Text("Send Request"),
+                                      child: const Text("Send Request",style: TextStyle(color: Colors.black),),
                                     );
                                   }
 
@@ -137,11 +135,15 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                                         request.receiverId == user.id &&
                                         request.status == "pending") {
                                       return ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),),
+                                        ),
                                         onPressed: () {
                                           // Add cancel request functionality
                                          context.read<FriendRequestBloc>().add(CancelSentFriendRequestEvent(request.id));
                                         },
-                                        child: const Text("Cancel Request"),
+                                        child: const Text("Cancel Request",style: TextStyle(color: Colors.black),),
                                       );
                                     }
                                     // Case 2: This user sent a pending request to current user
@@ -152,19 +154,27 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(10),),
+                                            ),
                                             onPressed: () {
                                               // Add confirm request functionality
                                               context.read<FriendRequestBloc>().add(AcceptFriendRequestEvent(request.id));
                                             },
-                                            child: const Text("Confirm"),
+                                            child: const Text("Confirm",style: TextStyle(color: Colors.black),),
                                           ),
                                           const SizedBox(width: 8), // Add spacing between buttons
                                           ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(10),),
+                                            ),
                                             onPressed: () {
                                               // Add reject request functionality
                                               context.read<FriendRequestBloc>().add(RejectFriendRequestEvent(request.id));
                                             },
-                                            child: const Text("Reject"),
+                                            child: const Text("Reject",style: TextStyle(color: Colors.black),),
                                           ),
                                         ],
                                       );
@@ -173,7 +183,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                                     else if (((request.senderId == user.id && request.receiverId == currentUserId) ||
                                         (request.senderId == currentUserId && request.receiverId == user.id)) &&
                                         request.status == "accepted") {
-                                      return const Text("Friend");
+                                      return const Text("Friend",style: TextStyle(color: Colors.white),);
                                     }
                                     // Case 4: Request was rejected
                                     else if (
@@ -185,11 +195,19 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                                   }
 
                                   // If no relationship found after checking all requests
-                                  return ElevatedButton(
-                                    onPressed: () {
-                                      context.read<FriendRequestBloc>().add(SendFriendRequestEvent(user.id));
-                                    },
-                                    child: const Text("Send Request"),
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),),
+                                      ),
+                                      onPressed: () {
+                                    
+                                        context.read<FriendRequestBloc>().add(SendFriendRequestEvent(user.id));
+                                      },
+                                      child: const Text("Send Request",style: TextStyle(color: Colors.black),),
+                                    ),
                                   );
                                 }else if(friendRequestState is FriendRequestError
                                 ){

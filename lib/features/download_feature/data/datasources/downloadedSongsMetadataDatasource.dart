@@ -36,6 +36,7 @@ class DownloadedSongsMetadataDataSource{
           // Extract title, artist, and album from metadata
           final title = metadata.title ?? getTitleFromFileName(file.uri.pathSegments.last);
           final artist = getArtistFromFileName(file.uri.pathSegments.last) ?? "Unknown Artist";
+          final id = getIdFromFileName(file.uri.pathSegments.last);
           final album = metadata.album ?? 'Unknown Album';
 
           // Extract album art if available
@@ -49,7 +50,9 @@ class DownloadedSongsMetadataDataSource{
             image: albumArt,
             songFile: file,
             album: album,
-            artist: artist
+            artist: artist,
+            id: id,
+            songSavedPath: file.uri.pathSegments.last
           ));
         }
 
@@ -74,6 +77,15 @@ class DownloadedSongsMetadataDataSource{
       return match.group(2) ?? 'Unknown Artist'; // Second group: artist
     }
     return 'Unknown Artist';
+  }
+  String getIdFromFileName(String fileName) {
+
+    final regex = RegExp(r'^(.+)-(.+)-(.+)\.mp3$');
+    final match = regex.firstMatch(fileName);
+    if (match != null) {
+      return match.group(3) ?? 'Unknown ID'; // Extract the video ID
+    }
+    return 'Unknown ID';
   }
 
 }

@@ -15,3 +15,7 @@ class NotificationsLoaded extends NotificationState {
   final List<Notification> notifications;
   NotificationsLoaded(this.notifications);
 }
+
+class DeletedNotification extends NotificationState{
+
+}

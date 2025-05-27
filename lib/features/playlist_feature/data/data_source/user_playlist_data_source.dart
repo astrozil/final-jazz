@@ -94,7 +94,7 @@ Future<Map?> fetchPlaylist(String playlistId)async{
       CollectionReference subCollectionRef =
           _fireStore.collection("Users").doc(userId).collection("Playlists");
       await subCollectionRef.doc(playlistId).update({
-        'songs': FieldValue.arrayRemove([songId])
+        'tracks': FieldValue.arrayRemove([songId])
       });
     } catch (e) {
       print('Error adding favourite song: $e');

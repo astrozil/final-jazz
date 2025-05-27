@@ -5,6 +5,7 @@ import 'package:jazz/features/auth_feature/data/models/notification_model.dart';
 abstract class NotificationDataSource {
   Future<void> createNotification(NotificationModel notification);
   Future<void> markAsRead(String notificationId);
+  Future<void> deleteNotification (String notificationId);
   Stream<List<NotificationModel>> getUserNotifications();
 }
 
@@ -17,6 +18,8 @@ class FirebaseNotificationDataSource implements NotificationDataSource {
   Future<void> createNotification(NotificationModel notification) async {
     await _firestore.collection('notifications').add(notification.toJson());
   }
+  
+  
 
   @override
   Future<void> markAsRead(String notificationId) async {
@@ -45,5 +48,10 @@ class FirebaseNotificationDataSource implements NotificationDataSource {
         });
       }).toList();
     });
+  }
+
+  @override
+  Future<void> deleteNotification(String notificationId)async {
+     await _firestore.collection("notifications").doc(notificationId).delete();
   }
 }

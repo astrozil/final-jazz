@@ -217,10 +217,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                                 errorText: _emailError,
                                 errorStyle: TextStyle(color: Colors.red, fontSize: 14.sp),
                                 contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                                prefixIcon: Icon(
-                                  Icons.email_outlined,
-                                  color: Colors.white70,
-                                ),
+
                               ),
                             ),
 
@@ -250,10 +247,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                                 errorText: _passwordError,
                                 errorStyle: TextStyle(color: Colors.red, fontSize: 14.sp),
                                 contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                                prefixIcon: Icon(
-                                  Icons.lock_outline,
-                                  color: Colors.white70,
-                                ),
+
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _isPasswordVisible

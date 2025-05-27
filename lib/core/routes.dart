@@ -1,5 +1,7 @@
 class Routes{
   static const String authScreen = "/";
+  static const String homeScreen = "/homeScreen";
+  static const String libraryScreen = "/libraryScreen";
   static const String searchScreen = "/searchScreen";
   static const String profileScreen = "/profileScreen";
   static const String setNameScreen = "/setNameScreen";
@@ -7,7 +9,8 @@ class Routes{
   static const String setFavouriteArtistsScreen = "/setFavouriteArtistsScreen";
   static const String passwordChangeScreen = "/passwordChangeScreen";
   static const String favouriteSongsPlaylistScreen = "/favouriteSongsPlaylistScreen";
-  static const String userPlaylistScreen = "/userPlaylistScreen";
+  static const String trendingSongsPlaylistScreen = "/trendingSongsPlaylistScreen";
+   static const String userPlaylistScreen = "/userPlaylistScreen";
   static const String specifiedUserPlaylist = "/specifiedUserPlaylist";
   static const String recommendedSongsPlaylistScreen = "/recommendedSongsPlaylistScreen";
   static const String userSearchScreen = "/userSearchScreen";
@@ -23,4 +26,13 @@ class Routes{
   static const String resetPasswordSuccessScreen = "/resetPasswordSuccessScreen";
   static const String emailChangeScreen = "/emailChangeScreen";
   static const String emailChangeSuccessScreen = "/emailChangeSuccessScreen";
+  static const String newPlaylistScreen = "/newPlaylistScreen";
+  static const String artistDetailScreen = "/artistDetailScreen";
+  static const String userPlaylistTitleUpdateScreen = "/userPlaylistTitleUpdateScreen";
+  static const String suggestedSongsPlaylistScreen = "/suggestedSongsPlaylistScreen";
+  static const String billboardSongsPlaylistScreen = "/billboardSongsPlaylistScreen";
+  static const String albumScreen = "/albumScreen";
+  static const String songsResultScreen = "/songsResultScreen";
+  static const String albumsResultScreen = "/albumsResultScreen";
+  static const String artistsResultScreen = "/artistsResultScreen";
 }

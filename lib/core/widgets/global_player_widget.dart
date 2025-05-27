@@ -56,14 +56,14 @@ class _GlobalPlayerWidgetState extends State<GlobalPlayerWidget> {
                 builder: (context, scrollController) {
                   return GestureDetector(
 
-                    onTap: () {
-                      if (_scrollableController.size == 0.13) {
+                    onTap: ()   {
+                      if (_scrollableController.size <= 0.14) {
                         _expandBox();
                       }
                     },
 
                     child: Container(
-                      color: Colors.white,
+                      color: Colors.transparent,
 
                       child: ListView(
                         controller: scrollController,

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:jazz/features/song_share_feature/data/models/shared_song_model.dart';
 
 abstract class SongShareDataSource {
@@ -50,7 +51,7 @@ class FirebaseSharedSongDataSource implements SongShareDataSource {
   Stream<List<SharedSongModel>> getSentSharedSongs(String userId) {
     return _firestore
         .collection('sharedSongs')
-        .where('senderId', isEqualTo: userId)
+        .where('senderId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {

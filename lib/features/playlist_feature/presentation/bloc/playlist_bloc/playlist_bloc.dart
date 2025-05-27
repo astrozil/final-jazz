@@ -1,6 +1,9 @@
+import 'dart:ui';
+
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:jazz/core/widgets/custom_snack_bar.dart';
 import 'package:jazz/features/auth_feature/domain/entities/user.dart';
 import 'package:jazz/features/playlist_feature/domain/entities/billboard_song.dart';
 import 'package:jazz/features/playlist_feature/domain/use_cases/add_favourite_song_use_case.dart';
@@ -89,7 +92,7 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistLoaded> {
 
        final trendingSongsPlaylist = await _fetchTrendingSongsUseCase();
 
-       emit(state.copyWith(isLoading: false,trendingSongsPlaylist: trendingSongsPlaylist));
+       emit(state.copyWith(trendingSongsPlaylist: trendingSongsPlaylist));
      }catch(e){
       print(e.toString());
      }
@@ -100,7 +103,7 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistLoaded> {
       try{
         final billboardSongsPlaylist = await _fetchBillboardSongsUseCase();
         emit(state.copyWith(
-            isLoading: false,
+
             billboardSongsPlaylist: billboardSongsPlaylist));
       }catch(e){
        print(e.toString());
@@ -112,7 +115,7 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistLoaded> {
       try{
         final suggestedSongsOfFavouriteArtistsPlaylist = await _fetchSuggestedSongsOfFavouriteArtistsUseCase(event.artistIds);
         emit(state.copyWith(
-            isLoading: false,
+
             suggestedSongsOfFavouriteArtists: suggestedSongsOfFavouriteArtistsPlaylist));
       }catch(e){
        print(e.toString());
@@ -123,25 +126,33 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistLoaded> {
       try{
         final recommendedSongsPlaylist = await _fetchRecommendedSongsPlaylistUseCase();
         emit(state.copyWith(
-            isLoading: false,
+
             recommendedSongsPlaylist: recommendedSongsPlaylist));
       }catch(e){
         print(e.toString());
       }
     });
     on<AddFavouriteSong>((event,emit)async{
+      emit(state.copyWith(isLoading: true));
       try{
       await  _addFavouriteSongUseCase(event.songId);
-
+      emit(state.copyWith(addedToFavourite: true));
+      emit(state.copyWith(addedToFavourite: false));
+       emit(state.copyWith(isLoading: false));
       }catch(e){
+        emit(state.copyWith(isLoading: false));
        print(e.toString());
       }
     });
     on<RemoveFavouriteSong>((event,emit)async{
       try{
+        emit(state.copyWith(isLoading: true));
         await  _removeFavouriteSongUseCase(event.songId);
-
+         emit(state.copyWith(removedFromFavourite: true));
+        emit(state.copyWith(removedFromFavourite: false));
+         emit(state.copyWith(isLoading: false));
       }catch(e){
+        emit(state.copyWith(isLoading: false));
        print(e.toString());
       }
     });
@@ -177,7 +188,7 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistLoaded> {
 
         final favouriteSongsPlaylist = await _fetchFavouriteSongsPlaylistUseCase(user.favouriteSongs);
         emit(state.copyWith(
-            isLoading: false,
+
             favouriteSongsPlaylist: favouriteSongsPlaylist));
       }catch(e){
 
@@ -197,8 +208,18 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistLoaded> {
    on<FetchSongsFromSongIdList>((event,emit)async{
      emit(state.copyWith(isLoading: true));
      try{
-       final songsFromSongIdList = await _fetchFavouriteSongsPlaylistUseCase(event.songIdList);
-       emit(state.copyWith(isLoading: false,songsFromSongIdList: songsFromSongIdList));
+       final  userPlaylist = await _fetchPlaylistUseCase(event.playlistId);
+       if(event.songIdList.isNotEmpty) {
+         final songsFromSongIdList = await _fetchFavouriteSongsPlaylistUseCase(
+             event.songIdList);
+
+         emit(state.copyWith(
+             isLoading: false, songsFromSongIdList: songsFromSongIdList,userPlaylist: userPlaylist));
+       }else{
+         emit(state.copyWith(
+           isLoading: false,songsFromSongIdList: [], userPlaylist: userPlaylist
+         ));
+       }
      }catch(e){
        print(e.toString());
      }

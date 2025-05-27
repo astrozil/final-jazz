@@ -28,4 +28,9 @@ class NotificationRepositoryImpl implements NotificationRepository {
   @override
   Stream<List<Notification>> getUserNotifications() =>
       dataSource.getUserNotifications();
+
+  @override
+  Future<void> deleteNotification({required String notificationId})async {
+    dataSource.deleteNotification(notificationId);
+  }
 }

@@ -13,6 +13,11 @@ class SetCurrentUserIdNotificationEvent extends NotificationEvent {
   final String userId;
   SetCurrentUserIdNotificationEvent(this.userId);
 }
+class DeleteNotification extends NotificationEvent{
+ final String notificationId;
+
+  DeleteNotification({required this.notificationId});
+}
 
 // Private events
 class _NotificationsUpdated extends NotificationEvent {

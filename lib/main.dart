@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:jazz/core/dependency_injection.dart';
 import 'package:jazz/core/router.dart';
@@ -19,6 +21,7 @@ import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc
 import 'package:jazz/features/auth_feature/presentation/bloc/friend_request_bloc/friend_request_bloc.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/notification_bloc/notification_bloc.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/search_users_bloc/search_users_bloc.dart';
+import 'package:jazz/features/auth_feature/presentation/bloc/user_bloc/user_bloc.dart';
 import 'package:jazz/features/auth_feature/presentation/screens/friend_requests_screen.dart';
 import 'package:jazz/features/auth_feature/presentation/screens/set_favourite_artists_screen.dart';
 import 'package:jazz/features/auth_feature/presentation/screens/set_name_screen.dart';
@@ -315,17 +318,22 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<NotificationBloc>(create: (context)=> di<NotificationBloc>()),
         BlocProvider<SharedSongBloc>(create: (context)=> di<SharedSongBloc>()),
         BlocProvider<SearchSuggestionBloc>(create: (context)=> di<SearchSuggestionBloc>()),
-        BlocProvider<InternetConnectionBloc>(create: (context)=> di<InternetConnectionBloc>()..add(CheckInternetConnection()))
+        BlocProvider<InternetConnectionBloc>(create: (context)=> di<InternetConnectionBloc>()..add(CheckInternetConnection())),
+        BlocProvider<UserBloc>(create: (context)=> di<UserBloc>())
       ],
       child: ScreenUtilInit(
         designSize: const Size(426,928),
         minTextAdapt: true,
         builder: (_,context) {
           return MaterialApp(
+            theme: ThemeData(
+              fontFamily: "Cal Sans"
+            ),
             debugShowCheckedModeBanner: false,
             navigatorKey: _navigatorKey,
             title: 'Music App',
             onGenerateRoute: widget.appRouter.onGenerateRoute,
+            initialRoute: "/homeScreen",
             // home: SetFavouriteArtistsScreen(),
           );
         }

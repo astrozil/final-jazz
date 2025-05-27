@@ -26,8 +26,9 @@ final class PlaylistLoadMoreEvent extends PlaylistEvent{
 }
 final class FetchSongsFromSongIdList extends PlaylistEvent{
   final List songIdList;
+  final String playlistId;
 
-  FetchSongsFromSongIdList({required this.songIdList});
+  FetchSongsFromSongIdList({required this.songIdList,required this.playlistId});
 }
 final class AddFavouriteSong extends PlaylistEvent{
   final String songId;
@@ -66,6 +67,7 @@ class ChangePlaylistTitle extends PlaylistEvent {
   final String playlistId;
   ChangePlaylistTitle({required this.title, required this.playlistId});
 }
+
 
 class AddSongToPlaylist extends PlaylistEvent {
   final String songId;

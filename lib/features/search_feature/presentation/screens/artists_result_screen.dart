@@ -41,7 +41,7 @@ class ArtistsResultScreen extends StatelessWidget {
                   onTap: () {
                     context.read<ArtistBloc>().add(FetchArtistEvent(artistId: artist.browseId));
                     Navigator.push(context, MaterialPageRoute(builder: (context){
-                      return ArtistDetailScreen();
+                      return ArtistDetailScreen(artistId: artist.browseId,);
                     }));
                   },
                 );

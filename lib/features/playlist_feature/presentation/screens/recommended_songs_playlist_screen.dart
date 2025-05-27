@@ -1,10 +1,21 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:jazz/core/app_color.dart';
 import 'package:jazz/features/playlist_feature/presentation/bloc/playlist_bloc/playlist_bloc.dart';
+import 'package:jazz/features/stream_feature/domain/entities/RelatedSong.dart';
 import 'package:jazz/features/stream_feature/presentation/bloc/playerBloc/player_bloc.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
+import '../../../../core/routes.dart';
+import '../../../../core/widgets/custom_snack_bar.dart';
+import '../../../../core/widgets/song_widget.dart';
+import '../../../download_feature/domain/entities/download_request.dart';
+import '../../../download_feature/presentation/bloc/DownloadedOrNotBloc/downloaded_or_not_bloc.dart';
+import '../../../download_feature/presentation/bloc/download/download_bloc.dart';
+import '../../../search_feature/presentation/bloc/artist_bloc/artist_bloc.dart';
+import '../../../search_feature/presentation/widgets/share_user_selection.dart';
+import '../../../search_feature/presentation/widgets/user_selection_bottom_sheet.dart';
 
 class RecommendedSongsPlaylistScreen extends StatelessWidget {
   const RecommendedSongsPlaylistScreen({super.key});
@@ -12,268 +23,288 @@ class RecommendedSongsPlaylistScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black87,
-      body: SafeArea(
-        child: BlocBuilder<PlaylistBloc, PlaylistState>(
-          builder: (context, state) {
-            print(state);
-            if (state is PlaylistLoaded && state.isLoading) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      width: 60,
-                      height: 60,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.purpleAccent),
-                        strokeWidth: 3,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Finding your vibe...",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            } else if (state is PlaylistLoaded && !state.isLoading) {
-              final songs = state.recommendedSongsPlaylist;
-              return CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  SliverAppBar(
-                    expandedHeight: 200.0,
-                    floating: false,
-                    pinned: true,
-                    stretch: true,
-                    backgroundColor: Colors.transparent,
-                    flexibleSpace: FlexibleSpaceBar(
-                      title: Text(
-                        'Recommended For You',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                      background: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          ShaderMask(
-                            shaderCallback: (rect) {
-                              return LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [Colors.black, Colors.transparent],
-                              ).createShader(Rect.fromLTRB(0, 0, rect.width, rect.height));
-                            },
-                            blendMode: BlendMode.dstIn,
-                            child: songs.isNotEmpty
-                                ? CachedNetworkImage(
-                              imageUrl: songs.first.song.thumbnails.highThumbnail.url,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(color: Colors.grey[900]),
-                              errorWidget: (context, url, error) => Container(
-                                color: Colors.grey[900],
-                                child: Icon(Icons.music_note, color: Colors.white24, size: 80),
-                              ),
-                            )
-                                : Container(color: Colors.grey[900]),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.black.withOpacity(0.7),
-                                  Colors.black.withOpacity(0.0),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    actions: [
-                      IconButton(
-                        icon: Icon(Icons.refresh, color: Colors.white),
-                        onPressed: () {
-                          // Keeping the function empty as per instructions
-                        },
-                      ),
-                    ],
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                          final song = songs[index];
-                          return Hero(
-                            tag: 'song-${song.song.id}',
-                            child: Material(
-                              color: Colors.transparent,
-                              child: AnimatedContainer(
-                                duration: Duration(milliseconds: 300),
-                                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[900],
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black26,
-                                      blurRadius: 10,
-                                      offset: Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
-                                  onTap: () {
-                                    context.read<PlayerBloc>().add(PlaySongEvent(song: left(song.song), albumTracks: songs));
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Row(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: CachedNetworkImage(
-                                            imageUrl: song.song.thumbnails.defaultThumbnail.url,
-                                            width: 70,
-                                            height: 70,
-                                            fit: BoxFit.cover,
-                                            placeholder: (context, url) => Container(
-                                              width: 70,
-                                              height: 70,
-                                              color: Colors.grey[800],
-                                              child: Center(
-                                                child: SizedBox(
-                                                  width: 20,
-                                                  height: 20,
-                                                  child: CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white54),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            errorWidget: (context, url, error) => Container(
-                                              width: 70,
-                                              height: 70,
-                                              color: Colors.grey[800],
-                                              child: Icon(Icons.music_note, color: Colors.white54),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                song.song.title,
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                song.song.artists
-                                                    .map((artist) => artist['name'] as String)
-                                                    .join(', '),
-                                                style: TextStyle(
-                                                  color: Colors.white70,
-                                                  fontSize: 14,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: Icon(Icons.play_circle_filled, color: Colors.purpleAccent, size: 36),
-                                          onPressed: () {
-                                            context.read<PlayerBloc>().add(PlaySongEvent(song: left(song.song), albumTracks: songs));
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                        childCount: songs.length,
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            } else if (state is PlaylistError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      color: Colors.redAccent,
-                      size: 60,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Oops! Something went wrong',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                      child: Text(
-                        state.errorMessage,
-                        style: TextStyle(color: Colors.white70),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purpleAccent,
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      icon: Icon(Icons.refresh),
-                      label: Text('Try Again'),
-                      onPressed: () {
-                        // Keeping the function empty as per instructions
-                      },
-                    ),
-                  ],
+      backgroundColor: AppColors.primaryBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_outlined, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: BlocBuilder<PlaylistBloc, PlaylistState>(
+        builder: (context, state) {
+          if (state is PlaylistLoaded && state.isLoading && state.recommendedSongsPlaylist.isEmpty) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            );
+          } else if (state is PlaylistLoaded && state.recommendedSongsPlaylist.isNotEmpty) {
+            final songs = state.recommendedSongsPlaylist;
+            if (songs.isEmpty) {
+              return const Center(
+                child: Text(
+                    "No recommended songs available",
+                    style: TextStyle(color: Colors.white)
                 ),
               );
             }
-            return Container();
-          },
+
+            return CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // Album Cover
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildAlbumCover(songs, context),
+                  ),
+                ),
+
+                // Playlist Info
+                SliverToBoxAdapter(
+                  child: Center(
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Recommended Songs",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "${songs.length} TRACKS",
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Play and Shuffle Buttons
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (songs.isNotEmpty) {
+                                context.read<PlayerBloc>().add(
+                                    PlaySongEvent(song: left(songs.first.song), albumTracks: songs)
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.play_arrow),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Play",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final List<RelatedSong> shuffleSongs = List.from(songs);
+                              shuffleSongs.shuffle();
+                              context.read<PlayerBloc>().add(
+                                  PlaySongEvent(song: left(shuffleSongs.first.song), albumTracks: shuffleSongs)
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[800],
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.shuffle),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Shuffle",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Song List
+                SliverPadding(
+                  padding: const EdgeInsets.only(top: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                        final song = songs[index];
+                        return songWidget(context: context, song: song.song,songs: songs);
+                      },
+                      childCount: songs.length,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          } else if (state is PlaylistError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    color: Colors.redAccent,
+                    size: 60,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Oops! Something went wrong',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                    child: Text(
+                      state.errorMessage,
+                      style: TextStyle(color: Colors.white70),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            return const Center(
+              child: Text(
+                  "Unexpected state",
+                  style: TextStyle(color: Colors.white)
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildAlbumCover(List<RelatedSong> songs, BuildContext context) {
+    if (songs.isEmpty) {
+      // Fallback for empty songs list
+      return AspectRatio(
+        aspectRatio: 1,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[800],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Center(
+            child: Icon(Icons.music_note, size: 80, color: Colors.white70),
+          ),
         ),
+      );
+    }
+
+    // For a single track, show a large image
+    if (songs.length == 1) {
+      return AspectRatio(
+        aspectRatio: 1,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            songs[0].song.thumbnails.highThumbnail.url,
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    }
+
+    // For multiple tracks, show a grid
+    return Center(
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.6,
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: GridView.count(
+            crossAxisCount: 2,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            children: _buildAlbumGridItems(songs),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildAlbumGridItems(List<RelatedSong> songs) {
+    final List<Widget> gridItems = [];
+
+    // Logic based on track count
+    if (songs.length == 2) {
+      // For 2 tracks: pattern [1,2,1,2]
+      gridItems.add(_buildGridItem(songs[0]));
+      gridItems.add(_buildGridItem(songs[1]));
+      gridItems.add(_buildGridItem(songs[0]));
+      gridItems.add(_buildGridItem(songs[1]));
+    } else if (songs.length == 3) {
+      // For 3 tracks: pattern [1,2,3,1]
+      gridItems.add(_buildGridItem(songs[0]));
+      gridItems.add(_buildGridItem(songs[1]));
+      gridItems.add(_buildGridItem(songs[2]));
+      gridItems.add(_buildGridItem(songs[0]));
+    } else {
+      // For 4 or more tracks: show first 4 tracks
+      for (int i = 0; i < 4 && i < songs.length; i++) {
+        gridItems.add(_buildGridItem(songs[i]));
+      }
+    }
+
+    return gridItems;
+  }
+
+  Widget _buildGridItem(RelatedSong song) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        song.song.thumbnails.highThumbnail.url,
+        fit: BoxFit.cover,
       ),
     );
   }

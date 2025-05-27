@@ -80,7 +80,7 @@ class Song extends Equatable {
        duration: json['duration'] as String? ?? "",
      );
    }catch(e){
-     print(e.toString());
+     print("Error is ${e.toString()}");
    }
    return Song(
      url: json['url'] as String? ??
