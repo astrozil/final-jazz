@@ -1,24 +1,20 @@
 import 'package:dartz/dartz.dart' as dartz;
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:jazz/core/app_color.dart';
-import 'package:jazz/core/widgets/confirm_widget.dart';
+
 import 'package:jazz/core/widgets/song_widget.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/notification_bloc/notification_bloc.dart';
 import 'package:jazz/features/playlist_feature/presentation/bloc/playlist_bloc/playlist_bloc.dart';
 
 import '../../../../core/routes.dart';
-import '../../../../core/widgets/custom_snack_bar.dart';
-import '../../../download_feature/domain/entities/download_request.dart';
-import '../../../download_feature/presentation/bloc/DownloadedOrNotBloc/downloaded_or_not_bloc.dart';
-import '../../../download_feature/presentation/bloc/download/download_bloc.dart';
-import '../../../search_feature/presentation/bloc/artist_bloc/artist_bloc.dart';
-import '../../../search_feature/presentation/widgets/share_user_selection.dart';
-import '../../../search_feature/presentation/widgets/user_selection_bottom_sheet.dart';
+
+import '../../../../core/widgets/section_header_with_view_all.dart';
+
 import '../../../stream_feature/presentation/bloc/playerBloc/player_bloc.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -55,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen>
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is UserDataFetched) {
+
           final artistIds = state.user.favouriteArtists.join(",");
           context.read<PlaylistBloc>().add(
               FetchSuggestedSongsOfFavouriteArtists(artistIds: artistIds));
@@ -96,35 +93,33 @@ class _HomeScreenState extends State<HomeScreen>
                   ],
                 ),
               ),
-              _buildSectionHeaderWithViewAll(context, "Trending songs for you",
+              buildSectionHeaderWithViewAll(context, "Trending songs for you",
                       () {
                     Navigator.pushNamed(context, Routes.trendingSongsPlaylistScreen);
                   }),
-              Container(
-                child: BlocBuilder<PlaylistBloc, PlaylistLoaded>(
-                  builder: (context, state) {
-                    if (state.isLoading && state.trendingSongsPlaylist.isEmpty) {
-                      return _buildSongListSkeleton();
-                    } else {
-                      return ListView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: 5,
-                          itemBuilder: (context, index) {
-                            final songs = state.trendingSongsPlaylist;
-                            final song = state.trendingSongsPlaylist[index];
-                            return songWidget(context: context, song: song.song,songs: songs);
-                          });
-                    }
-                  },
-                ),
+              BlocBuilder<PlaylistBloc, PlaylistLoaded>(
+                builder: (context, state) {
+                  if (state.isLoading && state.trendingSongsPlaylist.isEmpty) {
+                    return _buildSongListSkeleton();
+                  } else {
+                    return ListView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: 5,
+                        itemBuilder: (context, index) {
+                          final songs = state.trendingSongsPlaylist;
+                          final song = state.trendingSongsPlaylist[index];
+                          return songWidget(context: context, song: song.song,songs: songs);
+                        });
+                  }
+                },
               ),
               SizedBox(height: 16.h),
-              _buildSectionHeaderWithViewAll(
+              buildSectionHeaderWithViewAll(
                   context, "Songs of your favourite artists", () {
                 Navigator.pushNamed(context, Routes.suggestedSongsPlaylistScreen);
               }),
-              Container(
+              SizedBox(
                 height: 270.h,
                 child: BlocBuilder<PlaylistBloc, PlaylistLoaded>(
                   builder: (context, state) {
@@ -201,53 +196,49 @@ class _HomeScreenState extends State<HomeScreen>
                   },
                 ),
               ),
-              _buildSectionHeaderWithViewAll(context, "Billboard songs", () {
+              buildSectionHeaderWithViewAll(context, "Billboard songs", () {
                 Navigator.pushNamed(context, Routes.billboardSongsPlaylistScreen);
               }),
-              Container(
-                child: BlocBuilder<PlaylistBloc, PlaylistLoaded>(
-                  builder: (context, state) {
-                    if (state.isLoading &&
-                        state.billboardSongsPlaylist.isEmpty) {
-                      return _buildSongListSkeleton();
-                    } else {
-                      return ListView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: 5,
-                          itemBuilder: (context, index) {
-                            final songs = state.billboardSongsPlaylist;
-                            final song = state.billboardSongsPlaylist[index];
-                            return songWidget(context: context, song: song.song,songs: songs);
-                          });
-                    }
-                  },
-                ),
+              BlocBuilder<PlaylistBloc, PlaylistLoaded>(
+                builder: (context, state) {
+                  if (state.isLoading &&
+                      state.billboardSongsPlaylist.isEmpty) {
+                    return _buildSongListSkeleton();
+                  } else {
+                    return ListView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: 5,
+                        itemBuilder: (context, index) {
+                          final songs = state.billboardSongsPlaylist;
+                          final song = state.billboardSongsPlaylist[index];
+                          return songWidget(context: context, song: song.song,songs: songs);
+                        });
+                  }
+                },
               ),
               SizedBox(height: 16.h),
-              _buildSectionHeaderWithViewAll(context,
+              buildSectionHeaderWithViewAll(context,
                   "Recommendation from \n your recent songs", () {
                     Navigator.pushNamed(context, Routes.recommendedSongsPlaylistScreen);
                   }),
-              Container(
-                child: BlocBuilder<PlaylistBloc, PlaylistLoaded>(
-                  builder: (context, state) {
-                    if (state.isLoading &&
-                        state.recommendedSongsPlaylist.isEmpty) {
-                      return _buildSongListSkeleton();
-                    } else {
-                      return ListView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: 5,
-                          itemBuilder: (context, index) {
-                            final songs = state.recommendedSongsPlaylist;
-                            final song = state.recommendedSongsPlaylist[index];
-                            return songWidget(context: context, song: song.song,songs: songs);
-                          });
-                    }
-                  },
-                ),
+              BlocBuilder<PlaylistBloc, PlaylistLoaded>(
+                builder: (context, state) {
+                  if (state.isLoading &&
+                      state.recommendedSongsPlaylist.isEmpty) {
+                    return _buildSongListSkeleton();
+                  } else {
+                    return ListView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: 5,
+                        itemBuilder: (context, index) {
+                          final songs = state.recommendedSongsPlaylist;
+                          final song = state.recommendedSongsPlaylist[index];
+                          return songWidget(context: context, song: song.song,songs: songs);
+                        });
+                  }
+                },
               ),
             ],
           ),
@@ -415,33 +406,5 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildSectionHeaderWithViewAll(
-      BuildContext context, String title, VoidCallback onViewAllTapped) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          GestureDetector(
-            onTap: onViewAllTapped,
-            child: Text(
-              "View all",
-              style: TextStyle(
-                color: Colors.grey.withOpacity(0.8),
-                fontSize: 14.sp,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 }

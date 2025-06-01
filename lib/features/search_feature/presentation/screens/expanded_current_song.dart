@@ -187,7 +187,7 @@ class _ExpandedCurrentSongState extends State<ExpandedCurrentSong>
                           return Column(
                             children: [
                               Container(
-                                height: 350.h,
+                                height: 400.h,
                                 width: 350.w,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10),
@@ -208,9 +208,10 @@ class _ExpandedCurrentSongState extends State<ExpandedCurrentSong>
                               ),
                               const SizedBox(height: 25),
                               Container(
-                                padding: EdgeInsets.only(left: 25.w),
+                                padding: EdgeInsets.symmetric(horizontal: 25.w),
                                 width: MediaQuery.of(context).size.width,
                                 child: Row(
+
                                   children: [
                                     Column(
                                       crossAxisAlignment:
@@ -549,6 +550,7 @@ class _ExpandedCurrentSongState extends State<ExpandedCurrentSong>
                                           )),
                                     )
                                   ],
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 ),
                               ),
                             ],
@@ -642,21 +644,24 @@ class _ExpandedCurrentSongState extends State<ExpandedCurrentSong>
                                 thumbColor: Colors.white,
                                 overlayColor: Colors.purple.withOpacity(0.3),
                               ),
-                              child: Slider(
-                                min: 0,
-                                max: state.totalDuration.inMilliseconds
-                                    .toDouble(),
-                                value: state.songPosition.inMilliseconds
-                                    .toDouble(),
-                                onChanged: (value) {
-                                  context.read<PlayerBloc>().seekTo(
-                                      Duration(milliseconds: value.toInt()));
-                                },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                child: Slider(
+                                  min: 0,
+                                  max: state.totalDuration.inMilliseconds
+                                      .toDouble(),
+                                  value: state.songPosition.inMilliseconds
+                                      .toDouble(),
+                                  onChanged: (value) {
+                                    context.read<PlayerBloc>().seekTo(
+                                        Duration(milliseconds: value.toInt()));
+                                  },
+                                ),
                               ),
                             ),
                             Padding(
                               padding:
-                                  const EdgeInsets.symmetric(horizontal: 16.0),
+                                  const EdgeInsets.symmetric(horizontal: 30.0),
                               child: Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -857,7 +862,7 @@ class _ExpandedCurrentSongState extends State<ExpandedCurrentSong>
                               _buildActionButton(
                                 context: context,
                                 icon: Icons.queue_music,
-                                label: "Related",
+                                label: "Upcoming",
                                 onTap: () {
                                   Navigator.push(context,
                                       MaterialPageRoute(builder: (context) {
@@ -1091,7 +1096,7 @@ class _ExpandedCurrentSongState extends State<ExpandedCurrentSong>
                             _buildActionButton(
                               context: context,
                               icon: Icons.queue_music,
-                              label: "Related",
+                              label: "Upcoming",
                               onTap: () {
                                 Navigator.push(context,
                                     MaterialPageRoute(builder: (context) {

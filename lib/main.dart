@@ -333,7 +333,7 @@ class _MyAppState extends State<MyApp> {
             navigatorKey: _navigatorKey,
             title: 'Music App',
             onGenerateRoute: widget.appRouter.onGenerateRoute,
-            initialRoute: "/homeScreen",
+            initialRoute: Routes.splashScreen,
             // home: SetFavouriteArtistsScreen(),
           );
         }

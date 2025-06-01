@@ -61,7 +61,7 @@
       return Artist(
         name: json['name'] as String? ?? json['artist'] ?? '',
         // Use "channelId" from JSON instead of "browseId"
-        browseId: json['channelId'] as String? ?? '',
+        browseId: json['channelId'] as String? ?? json['browseId'] ?? "",
         category: json['category'] as String? ?? '',
         radioId: json['radioId'] as String? ?? '',
         resultType: json['resultType'] as String? ?? '',

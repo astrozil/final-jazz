@@ -20,8 +20,11 @@ import 'package:jazz/features/auth_feature/presentation/screens/sent_friend_requ
 import 'package:jazz/features/auth_feature/presentation/screens/set_favourite_artists_screen.dart';
 import 'package:jazz/features/auth_feature/presentation/screens/set_name_screen.dart';
 import 'package:jazz/features/auth_feature/presentation/screens/sign_up_screen.dart';
+import 'package:jazz/features/auth_feature/presentation/screens/splash_screen.dart';
 import 'package:jazz/features/auth_feature/presentation/screens/user_search_screen.dart';
+import 'package:jazz/features/download_feature/presentation/screens/download_screen.dart';
 import 'package:jazz/features/download_feature/presentation/screens/downloaded_songs_screen.dart';
+import 'package:jazz/features/internet_connection_checker/presentation/screens/internet_connection_wrapper.dart';
 import 'package:jazz/features/playlist_feature/presentation/screens/billboard_songs_playlist_screen.dart';
 import 'package:jazz/features/playlist_feature/presentation/screens/favourite_songs_playlist_screen.dart';
 import 'package:jazz/features/playlist_feature/presentation/screens/home_screen.dart';
@@ -33,8 +36,12 @@ import 'package:jazz/features/playlist_feature/presentation/screens/user_playlis
 import 'package:jazz/features/playlist_feature/presentation/screens/user_playlist_title_update_screen.dart';
 import 'package:jazz/features/search_feature/presentation/screens/album_Screen.dart';
 import 'package:jazz/features/search_feature/presentation/screens/albums_result_screen.dart';
+import 'package:jazz/features/search_feature/presentation/screens/all_albums_screen.dart';
+import 'package:jazz/features/search_feature/presentation/screens/all_singles_screen.dart';
+import 'package:jazz/features/search_feature/presentation/screens/artist_bio_screen.dart';
 import 'package:jazz/features/search_feature/presentation/screens/artist_detail_screen.dart';
 import 'package:jazz/features/search_feature/presentation/screens/artists_result_screen.dart';
+import 'package:jazz/features/search_feature/presentation/screens/following_artists_screen.dart';
 import 'package:jazz/features/search_feature/presentation/screens/new_playlist_screen.dart';
 import 'package:jazz/features/search_feature/presentation/screens/search_screen.dart';
 import 'package:jazz/features/search_feature/presentation/screens/songs_result_screen.dart';
@@ -58,20 +65,7 @@ class AppRouter {
   // Build bottom navigation bar
   Widget _buildBottomNavBar(BuildContext context, String currentRoute) {
     // Determine current index based on route
-    switch (currentRoute) {
-      case Routes.homeScreen:
-        _currentNavIndex = 0;
-        break;
-      case Routes.searchScreen:
-        _currentNavIndex = 1;
-        break;
-      case Routes.libraryScreen:
-        _currentNavIndex = 2;
-        break;
 
-      default:
-        break;
-    }
 
     return Theme(
         data: Theme.of(context).copyWith(
@@ -79,6 +73,7 @@ class AppRouter {
       highlightColor: Colors.transparent,
       hoverColor: Colors.transparent),
       child: BottomNavigationBar(
+
         elevation: 0,
         backgroundColor: AppColors.primaryBackgroundColor,
         type: BottomNavigationBarType.fixed,
@@ -120,16 +115,19 @@ class AppRouter {
       case 2:
         route = Routes.libraryScreen;
         break;
-
       default:
         return;
     }
+
+    // Update the current index to reflect the selected tab
+    _currentNavIndex = index;
 
     // Navigate only if not already on the same route
     if (ModalRoute.of(context)?.settings.name != route) {
       Navigator.pushNamed(context, route);
     }
   }
+
 
   // Check if route should have bottom navigation bar
   bool _shouldShowBottomNav(String? routeName) {
@@ -139,9 +137,31 @@ class AppRouter {
       Routes.userPlaylistScreen,
       Routes.downloadedSongsScreen,
       Routes.favouriteSongsPlaylistScreen,
+      Routes.artistDetailScreen,
       Routes.recommendedSongsPlaylistScreen,
+      Routes.suggestedSongsPlaylistScreen,
+      Routes.trendingSongsPlaylistScreen,
+      Routes.billboardSongsPlaylistScreen,
+      Routes.songsResultScreen,
+      Routes.albumsResultScreen,
+      Routes.artistsResultScreen,
+      Routes.artistDetailScreen,
       Routes.homeScreen,
-      Routes.libraryScreen
+      Routes.albumScreen,
+      Routes.libraryScreen,
+      Routes.specifiedUserPlaylist,
+      Routes.followingArtistsScreen,
+      Routes.downloadQueueScreen,
+      Routes.userSearchScreen,
+      Routes.sentFriendRequestsScreen,
+      Routes.friendRequestsScreen,
+      Routes.friendsScreen,
+      Routes.allSingleScreen,
+      Routes.allAlbumScreen,
+      Routes.artistBioScreen,
+      Routes.albumDescriptionScreen,
+      Routes.notificationScreen
+
     ];
     return routesWithBottomNav.contains(routeName);
   }
@@ -149,6 +169,23 @@ class AppRouter {
   Route? onGenerateRoute(RouteSettings routeSettings) {
     final routeName = routeSettings.name;
     final shouldShowBottomNav = _shouldShowBottomNav(routeName);
+  
+    bool _isAuthRoute(String? routeName) {
+      const authRoutes = [
+        Routes.authScreen,
+        Routes.loginScreen,
+        Routes.signUpScreen,
+        Routes.forgotPasswordScreen,
+        Routes.resetPasswordSuccessScreen,
+        Routes.setNameScreen,
+        Routes.setFavouriteArtistsScreen,
+      ];
+      return authRoutes.contains(routeName);
+    }
+    if (_isAuthRoute(routeName)) {
+      _currentNavIndex = 0; // Reset to home tab
+    }
+
 
     switch (routeName) {
     // Main app screens with bottom navigation
@@ -166,6 +203,38 @@ class AppRouter {
         return NoAnimationRoute(
           builder: (context) => AppWithPlayer(
             child: AlbumScreen(),
+            bottomNavigationBar: shouldShowBottomNav
+                ? _buildBottomNavBar(context, routeName!)
+                : null,
+          ),
+          settings: routeSettings,
+        );
+      case Routes.albumDescriptionScreen:
+        Map args = routeSettings.arguments as Map;
+        return NoAnimationRoute(
+          builder: (context) => AppWithPlayer(
+            child: AlbumDescriptionScreen(albumTitle: args['albumTitle'], artist: args['artist'], description: args['description']),
+            bottomNavigationBar: shouldShowBottomNav
+                ? _buildBottomNavBar(context, routeName!)
+                : null,
+          ),
+          settings: routeSettings,
+        );
+      case Routes.artistBioScreen:
+        Map args = routeSettings.arguments as Map;
+        return NoAnimationRoute(
+          builder: (context) => AppWithPlayer(
+            child: ArtistBioScreen(bio: args['bio']),
+            bottomNavigationBar: shouldShowBottomNav
+                ? _buildBottomNavBar(context, routeName!)
+                : null,
+          ),
+          settings: routeSettings,
+        );
+      case Routes.downloadQueueScreen:
+        return NoAnimationRoute(
+          builder: (context) => AppWithPlayer(
+            child: DownloadScreen(),
             bottomNavigationBar: shouldShowBottomNav
                 ? _buildBottomNavBar(context, routeName!)
                 : null,
@@ -242,6 +311,16 @@ class AppRouter {
           ),
           settings: routeSettings,
         );
+      case Routes.followingArtistsScreen:
+        return NoAnimationRoute(
+          builder: (context) => AppWithPlayer(
+            child: FollowingArtistsScreen(),
+            bottomNavigationBar: shouldShowBottomNav
+                ? _buildBottomNavBar(context, routeName!)
+                : null,
+          ),
+          settings: routeSettings,
+        );
       case Routes.libraryScreen:
         return NoAnimationRoute(
           builder: (context) => AppWithPlayer(
@@ -312,6 +391,31 @@ class AppRouter {
         return NoAnimationRoute(
           builder: (context) => AppWithPlayer(
             child: SpecifiedUserPlaylistScreen(),
+            bottomNavigationBar: shouldShowBottomNav
+                ? _buildBottomNavBar(context, routeName!)
+                : null,
+          ),
+          settings: routeSettings,
+        );
+      case Routes.allAlbumScreen:
+        Map args = routeSettings.arguments as Map;
+        return NoAnimationRoute(
+          builder: (context) => AppWithPlayer(
+            bottomNavigationBar: shouldShowBottomNav
+                ? _buildBottomNavBar(context, routeName!)
+                : null,
+            child: AllAlbumsScreen(albums: args["albums"], artistName: args['artistName']),
+          ),
+          settings: routeSettings,
+        );
+      case Routes.allSingleScreen:
+        Map args = routeSettings.arguments as Map;
+        return NoAnimationRoute(
+          builder: (context) => AppWithPlayer(
+            bottomNavigationBar: shouldShowBottomNav
+                ? _buildBottomNavBar(context, routeName!)
+                : null,
+            child: AllSinglesScreen(singles: args["singles"], artistName: args['artistName']),
           ),
           settings: routeSettings,
         );
@@ -321,6 +425,9 @@ class AppRouter {
         return NoAnimationRoute(
           builder: (context) => AppWithPlayer(
             child: ArtistDetailScreen(artistId: args["artistId"]),
+            bottomNavigationBar: shouldShowBottomNav
+                ? _buildBottomNavBar(context, routeName!)
+                : null,
           ),
           settings: routeSettings,
         );
@@ -359,31 +466,41 @@ class AppRouter {
     // Social features (no player, no bottom nav)
       case Routes.userSearchScreen:
         return NoAnimationRoute(
-          builder: (_) => UserSearchScreen(),
+          builder: (context) => AppWithPlayer(child: UserSearchScreen(),bottomNavigationBar: shouldShowBottomNav
+              ? _buildBottomNavBar(context, routeName!)
+              : null,),
           settings: routeSettings,
         );
 
       case Routes.friendRequestsScreen:
         return NoAnimationRoute(
-          builder: (_) => const FriendRequestsScreen(),
+          builder: (context) => AppWithPlayer(child: const FriendRequestsScreen(),bottomNavigationBar: shouldShowBottomNav
+              ? _buildBottomNavBar(context, routeName!)
+              : null,),
           settings: routeSettings,
         );
 
       case Routes.friendsScreen:
         return NoAnimationRoute(
-          builder: (_) => FriendsScreen(),
+          builder: (context) => AppWithPlayer(child: FriendsScreen(),bottomNavigationBar: shouldShowBottomNav
+              ? _buildBottomNavBar(context, routeName!)
+              : null,),
           settings: routeSettings,
         );
 
       case Routes.sentFriendRequestsScreen:
         return NoAnimationRoute(
-          builder: (_) => const SentFriendRequestsScreen(),
+          builder: (context) => AppWithPlayer(child: const SentFriendRequestsScreen(),bottomNavigationBar: shouldShowBottomNav
+              ? _buildBottomNavBar(context, routeName!)
+              : null,),
           settings: routeSettings,
         );
 
       case Routes.notificationScreen:
         return NoAnimationRoute(
-          builder: (_) => const NotificationScreen(),
+          builder: (context) => AppWithPlayer(child: const NotificationScreen(),bottomNavigationBar: shouldShowBottomNav
+              ? _buildBottomNavBar(context, routeName!)
+              : null,),
           settings: routeSettings,
         );
 
@@ -446,6 +563,8 @@ class AppRouter {
           builder: (_) => SetFavouriteArtistsScreen(),
           settings: routeSettings,
         );
+      case Routes.splashScreen:
+        return NoAnimationRoute(builder: (_)=> SplashScreen(),settings: routeSettings);
 
       default:
         return null;

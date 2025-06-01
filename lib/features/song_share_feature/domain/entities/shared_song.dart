@@ -4,7 +4,7 @@ class SharedSong {
   final String receiverId;
   final String songId;
   final String songName;
-  final List artistName;
+  final String artistName;
   final String type;
   final String albumArt;
   final String message;

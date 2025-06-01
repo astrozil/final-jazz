@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
@@ -165,7 +166,33 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
           return downloadedSongs;
         });
   }
+  Future<void> stopOnLogout() async {
+    // Stop the audio player immediately
+    if (audioPlayer.playing) {
+      await audioPlayer.stop();
+    }
 
+    // Cancel all subscriptions
+    _cancelSubscriptions();
+    _cancelCurrentLyricsRequest();
+
+    // Reset state to initial
+    add(UpdateStateEvent(state: PlayerState(
+        songPosition: Duration.zero,
+        currentSong: null,
+        totalDuration: Duration.zero,
+        isPlaying: false,
+        isSongRepeatEnabled: false,
+        isPlaylistRepeatEnabled: false,
+        isShuffleEnabled: false,
+        isLoading: false,
+        errorMessage: null,
+        relatedSongs: SongHistory.empty(),
+        lyrics: [],
+        currentSongIndex: 0,
+        isFromAlbum: false
+    )));
+  }
   Future<void> _playPreviousSongEvent(PlayPreviousEvent event, Emitter<PlayerState> emit) async {
     if (state.currentSongIndex > 0) {
       _cancelCurrentLyricsRequest(); // Cancel lyrics when switching songs
@@ -520,3 +547,4 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     return super.close();
   }
 }
+

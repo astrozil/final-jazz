@@ -35,4 +35,11 @@ class Routes{
   static const String songsResultScreen = "/songsResultScreen";
   static const String albumsResultScreen = "/albumsResultScreen";
   static const String artistsResultScreen = "/artistsResultScreen";
+  static const String followingArtistsScreen = "/followingArtistsScreen";
+  static const String downloadQueueScreen = "/downloadQueueScreen";
+  static const String allAlbumScreen = "/allAlbumScreen";
+  static const String allSingleScreen = "/allSingleScreen";
+  static const String artistBioScreen = "/artistBioScreen";
+  static const String albumDescriptionScreen = "/albumDescriptionScreen";
+  static const String splashScreen = "/splashScreen";
 }

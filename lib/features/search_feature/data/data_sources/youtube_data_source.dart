@@ -99,6 +99,7 @@ class YouTubeDataSource {
     if (rawData != null) {
       List<Artist> artists = [];
       for (var artistData in rawData) {
+
         artists.add(
           Artist.fromJson(artistData)
         );

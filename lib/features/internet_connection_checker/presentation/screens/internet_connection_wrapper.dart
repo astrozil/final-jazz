@@ -29,14 +29,7 @@ class InternetConnectionWrapper extends StatelessWidget {
                     strokeWidth: 2,
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    "Checking connection...",
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFFB3B3B3),
-                    ),
-                  ),
+
                 ],
               ),
             ),

@@ -9,3 +9,9 @@ final class FetchArtistEvent extends ArtistEvent{
   FetchArtistEvent({required this.artistId});
 
 }
+final class FetchArtistsEvent extends ArtistEvent {
+  final List<String> artistIdList;
+
+  FetchArtistsEvent({required this.artistIdList});
+
+}

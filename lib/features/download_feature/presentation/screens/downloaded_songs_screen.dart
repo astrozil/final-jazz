@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:jazz/core/app_color.dart';
+import 'package:jazz/core/routes.dart';
 import 'package:jazz/features/download_feature/domain/entities/downloadedSong.dart';
 import 'package:jazz/features/download_feature/presentation/bloc/download/download_bloc.dart';
 import 'package:jazz/features/download_feature/presentation/bloc/downloadedSongsBloc/downloaded_songs_bloc.dart';
@@ -46,10 +47,7 @@ class DownloadedSongsScreen extends StatelessWidget {
                       title: Text("Download Queue",style: TextStyle(color: Colors.white),),
                       trailing: GestureDetector(
                         onTap: (){
-                         Navigator.push(context, MaterialPageRoute(builder: (context){
-
-                           return DownloadScreen();
-                         }));
+                         Navigator.pushNamed(context, Routes.downloadQueueScreen);
                         },
                         child: Icon(Icons.arrow_forward_ios_outlined,color: Colors.grey,),
                       ),

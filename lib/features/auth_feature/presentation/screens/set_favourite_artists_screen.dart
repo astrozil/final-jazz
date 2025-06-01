@@ -48,15 +48,7 @@ class _SetFavouriteArtistsScreenState extends State<SetFavouriteArtistsScreen> {
     context.read<AuthBloc>().add(
         UpdateUserProfileEvent(favouriteArtists: _selectedArtists.toList()));
     // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Center(
-        child: CircularProgressIndicator(
-          color: Colors.white,
-        ),
-      ),
-    );
+
   }
 
   @override
@@ -64,13 +56,22 @@ class _SetFavouriteArtistsScreenState extends State<SetFavouriteArtistsScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthLoading) {
-          // Loading is already shown
+          // showDialog(
+          //   context: context,
+          //   barrierDismissible: false,
+          //   builder: (context) => Center(
+          //     child: CircularProgressIndicator(
+          //       color: Colors.white,
+          //     ),
+          //   ),
+          // );
         } else if (state is UserDataUpdated) {
           if (Navigator.canPop(context)) {
             Navigator.pop(context); // Dismiss loading dialog
+
           }
           Navigator.pushNamedAndRemoveUntil(
-              context, Routes.searchScreen, (Route<dynamic> route) => false);
+              context, Routes.homeScreen, (Route<dynamic> route) => false);
         } else if (state is AuthFailure) {
           if (Navigator.canPop(context)) {
             Navigator.pop(context); // Dismiss loading dialog
@@ -338,20 +339,8 @@ class _SetFavouriteArtistsScreenState extends State<SetFavouriteArtistsScreen> {
                         SizedBox(height: 16.h),
 
                         // Skip button
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pushNamedAndRemoveUntil(
-                                context, Routes.searchScreen, (route) => false);
-                          },
-                          child: Text(
-                            "Skip for now",
-                            style: TextStyle(
-                              color: Colors.white60,
-                              fontSize: 16.sp,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
+
+
                       ],
                     ),
                   ),

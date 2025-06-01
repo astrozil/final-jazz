@@ -16,6 +16,7 @@ class SongsResultScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.primaryBackgroundColor,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
           automaticallyImplyLeading: false,
           leading: GestureDetector(
             onTap: (){
@@ -38,6 +39,7 @@ class SongsResultScreen extends StatelessWidget {
               return const Center(child: Text("No songs found."));
             }
             return ListView.builder(
+              physics: BouncingScrollPhysics(),
               itemCount: songs.length,
               itemBuilder: (context, index) {
                 final song = songs[index];

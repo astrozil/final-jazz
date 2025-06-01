@@ -27,7 +27,7 @@ class ShareSong {
       userId: sharedSong.receiverId,
       title: 'New Song Shared',
       body: '${sender.name} shared "${sharedSong.songName}" by ${sharedSong
-          .artistName.map((artist)=> artist["name"]).join(",")} with you',
+          .artistName} with you',
       type: 'shared_song',
       relatedUserId: sharedSong.senderId,
       isRead: false,

@@ -1,24 +1,17 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'package:jazz/core/app_color.dart';
 import 'package:jazz/features/playlist_feature/presentation/bloc/playlist_bloc/playlist_bloc.dart';
 import 'package:jazz/features/stream_feature/domain/entities/RelatedSong.dart';
 import 'package:jazz/features/stream_feature/presentation/bloc/playerBloc/player_bloc.dart';
 
-import '../../../../core/routes.dart';
-import '../../../../core/widgets/custom_snack_bar.dart';
 import '../../../../core/widgets/song_widget.dart';
-import '../../../download_feature/domain/entities/download_request.dart';
-import '../../../download_feature/presentation/bloc/DownloadedOrNotBloc/downloaded_or_not_bloc.dart';
-import '../../../download_feature/presentation/bloc/download/download_bloc.dart';
-import '../../../search_feature/presentation/bloc/artist_bloc/artist_bloc.dart';
-import '../../../search_feature/presentation/widgets/share_user_selection.dart';
-import '../../../search_feature/presentation/widgets/user_selection_bottom_sheet.dart';
+
 
 class BillboardSongsPlaylistScreen extends StatelessWidget {
-  const BillboardSongsPlaylistScreen({Key? key}) : super(key: key);
+  const BillboardSongsPlaylistScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -184,13 +177,13 @@ class BillboardSongsPlaylistScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.error_outline,
                     color: Colors.redAccent,
                     size: 60,
                   ),
                   const SizedBox(height: 16),
-                  Text(
+                  const Text(
                     'Oops! Something went wrong',
                     style: TextStyle(
                       color: Colors.white,
@@ -203,7 +196,7 @@ class BillboardSongsPlaylistScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 32.0),
                     child: Text(
                       state.errorMessage,
-                      style: TextStyle(color: Colors.white70),
+                      style: const TextStyle(color: Colors.white70),
                       textAlign: TextAlign.center,
                     ),
                   ),

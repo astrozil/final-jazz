@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart' as dartz;
-import 'package:dio/dio.dart';
+import 'dart:math' as math;
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,25 +9,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:jazz/core/app_color.dart';
 import 'package:jazz/core/dependency_injection.dart';
 import 'package:jazz/core/routes.dart';
-import 'package:jazz/core/widgets/app_with_player.dart';
-import 'package:jazz/core/widgets/song_widget.dart';
 
-import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc.dart';
-import 'package:jazz/features/download_feature/data/datasources/download_datasource.dart';
-import 'package:jazz/features/download_feature/domain/entities/download_request.dart';
-import 'package:jazz/features/download_feature/presentation/bloc/DownloadedOrNotBloc/downloaded_or_not_bloc.dart';
+import 'package:jazz/core/widgets/song_widget.dart';
 import 'package:jazz/features/download_feature/presentation/bloc/download/download_bloc.dart';
-import 'package:jazz/features/download_feature/presentation/bloc/downloadedSongsBloc/downloaded_songs_bloc.dart';
-import 'package:jazz/features/download_feature/presentation/screens/download_screen.dart';
-import 'package:jazz/features/download_feature/presentation/screens/downloaded_songs_screen.dart';
+
 import 'package:jazz/features/internet_connection_checker/presentation/screens/internet_connection_wrapper.dart';
-import 'package:jazz/features/playlist_feature/presentation/bloc/playlist_bloc/playlist_bloc.dart';
-import 'package:jazz/features/playlist_feature/presentation/screens/billboard_songs_playlist_screen.dart';
-import 'package:jazz/features/playlist_feature/presentation/screens/suggested_songs_of_favourite_artists_playlist_screen.dart';
-import 'package:jazz/features/playlist_feature/presentation/screens/trending_songs_playlist_screen.dart';
-import 'package:jazz/features/search_feature/domain/entities/album.dart';
+
 import 'package:jazz/features/search_feature/domain/entities/song.dart';
-import 'package:jazz/features/search_feature/domain/usecases/search.dart';
+
 import 'package:jazz/features/search_feature/presentation/bloc/albumBloc/album_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/artist_bloc/artist_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/currentSongWidgetBloc/current_song_widget_bloc.dart';
@@ -34,21 +24,17 @@ import 'package:jazz/features/search_feature/presentation/bloc/search/search_blo
 import 'package:jazz/features/search_feature/presentation/bloc/search_suggestion_bloc/search_suggestion_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/bloc/song/song_bloc.dart';
 import 'package:jazz/features/search_feature/presentation/screens/album_Screen.dart';
-import 'package:jazz/features/search_feature/presentation/screens/albums_result_screen.dart';
+
 import 'package:jazz/features/search_feature/presentation/screens/artist_detail_screen.dart';
-import 'package:jazz/features/search_feature/presentation/screens/artists_result_screen.dart';
-import 'package:jazz/features/search_feature/presentation/screens/collapsed_current_song.dart';
-import 'package:jazz/features/search_feature/presentation/screens/expanded_current_song.dart';
-import 'package:jazz/features/search_feature/presentation/screens/songs_result_screen.dart';
-import 'package:jazz/features/search_feature/presentation/widgets/search_suggestion_widget.dart';
+
 import 'package:jazz/features/search_feature/presentation/widgets/user_selection_bottom_sheet.dart';
 import 'package:jazz/features/stream_feature/presentation/bloc/playerBloc/player_bloc.dart';
-import 'package:jazz/features/stream_feature/presentation/screens/streamScreen.dart';
 
-import '../../../../core/widgets/custom_snack_bar.dart';
-import '../widgets/share_user_selection.dart';
+import '../../../../core/widgets/section_header_with_view_all.dart';
 
 class SearchScreen extends StatefulWidget {
+  const SearchScreen({super.key});
+
   @override
   _SearchScreenState createState() => _SearchScreenState();
 }
@@ -58,93 +44,59 @@ class _SearchScreenState extends State<SearchScreen>{
   final DraggableScrollableController _scrollableController = DraggableScrollableController();
   final FocusNode _focusNode = FocusNode();
 
-  // Recent searches and suggestions state
+  // Recent searches state
   List<String> _recentSearches = [];
-  List<String> _suggestions = [];
   List<String> _filteredRecentSearches = [];
   bool _isTyping = false;
   bool _showSearchResults = false;
 
-  void _expandBox() {
-    _scrollableController.animateTo(
-      1.0,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  // Load recent searches from Firebase
   Future<void> _loadRecentSearches() async {
-    try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId != null) {
-        final doc = await FirebaseFirestore.instance.collection("Users").doc(userId).get();
-        if (doc.exists && doc.data()?['searchHistory'] != null) {
-          setState(() {
-            _recentSearches = List<String>.from(doc.data()!['searchHistory']).reversed.take(10).toList();
-          });
-        }
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      final doc = await FirebaseFirestore.instance.collection("Users").doc(userId).get();
+      if (doc.exists && doc.data()?['searchHistory'] != null) {
+        setState(() {
+          // FIXED: Limit to 5 recent searches
+          _recentSearches = List<String>.from(doc.data()!['searchHistory']).reversed.take(5).toList();
+        });
       }
-    } catch (e) {
-      print('Error loading recent searches: $e');
     }
   }
 
   // Remove recent search
   Future<void> _removeRecentSearch(String searchTerm) async {
-    try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId != null) {
-        await FirebaseFirestore.instance.collection("Users").doc(userId).update({
-          "searchHistory": FieldValue.arrayRemove([searchTerm])
-        });
-        setState(() {
-          _recentSearches.remove(searchTerm);
-        });
-      }
-    } catch (e) {
-      print('Error removing search term: $e');
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      await FirebaseFirestore.instance.collection("Users").doc(userId).update({
+        "searchHistory": FieldValue.arrayRemove([searchTerm])
+      });
+      setState(() {
+        _recentSearches.remove(searchTerm);
+      });
     }
   }
 
-  // FIXED: Generate suggestions based on input and remove duplicates with recent searches
-  void _generateSuggestions(String query) {
-    if (query.isEmpty) {
-      setState(() {
-        _suggestions = [];
-        _filteredRecentSearches = [];
-        _isTyping = false;
-      });
-      return;
-    }
-
+  // Handle text input changes
+  void _onTextChanged(String query) {
     setState(() {
-      _isTyping = true;
+      _isTyping = query.isNotEmpty;
 
-      // Filter recent searches that match the query
-      _filteredRecentSearches = _recentSearches
-          .where((item) => item.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      if (query.isEmpty) {
+        _filteredRecentSearches = [];
+        context.read<SearchSuggestionBloc>().add(ClearSearchSuggestionsEvent());
+      } else {
+        // Filter recent searches that match the query
+        _filteredRecentSearches = _recentSearches
+            .where((item) => item.toLowerCase().contains(query.toLowerCase()))
+            .toList();
 
-      // Generate common suggestions
-      List<String> commonSuggestions = [
-        query,
-        '${query} songs',
-        '${query} artist',
-        '${query} album',
-        '${query} lyrics',
-      ];
-
-      // FIXED: Remove duplicates - filter out suggestions that are already in recent searches
-      _suggestions = commonSuggestions
-          .where((suggestion) => !_recentSearches.any((recent) =>
-      recent.toLowerCase() == suggestion.toLowerCase()))
-          .take(6)
-          .toList();
+        // Get suggestions from bloc
+        context.read<SearchSuggestionBloc>().add(GetSearchSuggestionEvent( query));
+      }
     });
   }
 
-  // Build recent searches widget (when not typing)
+  // Build recent searches widget (when not typing) - FIXED: Limited to 5 items
   Widget _buildRecentSearches() {
     if (_recentSearches.isEmpty) {
       return const Center(
@@ -161,8 +113,8 @@ class _SearchScreenState extends State<SearchScreen>{
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-         Padding(
-          padding: EdgeInsets.all(16.0),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Text(
             'Recent Searches',
             style: TextStyle(fontSize: 18, color: Colors.white.withOpacity(0.7)),
@@ -171,12 +123,13 @@ class _SearchScreenState extends State<SearchScreen>{
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: _recentSearches.length,
+          // FIXED: Limit itemCount to maximum 5 items
+          itemCount: math.min(_recentSearches.length, 5),
           itemBuilder: (context, index) {
             final searchTerm = _recentSearches[index];
             return ListTile(
               leading: const Icon(Icons.history, color: Colors.grey),
-              title: Text(searchTerm,style: TextStyle(color: Colors.grey),),
+              title: Text(searchTerm,style: const TextStyle(color: Colors.grey),),
               trailing: IconButton(
                 icon: const Icon(Icons.close, color: Colors.grey),
                 onPressed: () => _removeRecentSearch(searchTerm),
@@ -192,23 +145,23 @@ class _SearchScreenState extends State<SearchScreen>{
     );
   }
 
-  // FIXED: Build suggestions widget (when typing) - shows filtered recent + unique suggestions
+  // Build suggestions widget (when typing) - shows filtered recent + bloc suggestions
   Widget _buildSuggestions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Show filtered recent searches first (if any)
         if (_filteredRecentSearches.isNotEmpty) ...[
-
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: _filteredRecentSearches.length,
+            // FIXED: Also limit filtered recent searches to 5
+            itemCount: math.min(_filteredRecentSearches.length, 5),
             itemBuilder: (context, index) {
               final searchTerm = _filteredRecentSearches[index];
               return ListTile(
                 leading: const Icon(Icons.history, color: Colors.grey),
-                title: Text(searchTerm,style: TextStyle(color: Colors.grey),),
+                title: Text(searchTerm,style: const TextStyle(color: Colors.grey),),
                 trailing: IconButton(
                   icon: const Icon(Icons.north_west, color: Colors.grey),
                   onPressed: () {
@@ -227,28 +180,69 @@ class _SearchScreenState extends State<SearchScreen>{
           ),
         ],
 
-        // Show unique suggestions
-        if (_suggestions.isNotEmpty) ...[
-          if (_filteredRecentSearches.isNotEmpty)
+        // Show bloc suggestions
+        BlocBuilder<SearchSuggestionBloc, SearchSuggestionState>(
+          builder: (context, state) {
+            if (state is SearchSuggestionLoading) {
+              return const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                ),
+              );
+            } else if (state is SearchSuggestionLoaded) {
+              final suggestions = state.suggestions.cast<String>();
 
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _suggestions.length,
-            itemBuilder: (context, index) {
-              final suggestion = _suggestions[index];
-              return ListTile(
-                leading: const Icon(Icons.search, color: Colors.grey),
-                title: Text(suggestion,style: TextStyle(color: Colors.grey),),
-                trailing: const Icon(Icons.north_west, color: Colors.grey),
-                onTap: () {
-                  _controller.text = suggestion;
-                  _performSearch(suggestion);
+              // Filter out suggestions that are already in recent searches to avoid duplicates
+              final uniqueSuggestions = suggestions
+                  .where((suggestion) => !_recentSearches.any((recent) =>
+              recent.toLowerCase() == suggestion.toLowerCase()))
+                  .toList();
+
+              if (uniqueSuggestions.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: uniqueSuggestions.length,
+                itemBuilder: (context, index) {
+                  final suggestion = uniqueSuggestions[index];
+                  return ListTile(
+                    leading: const Icon(Icons.search, color: Colors.grey),
+                    title: Text(suggestion, style: const TextStyle(color: Colors.grey),),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.north_west, color: Colors.grey),
+                      onPressed: () {
+                        _controller.text = suggestion;
+                        _controller.selection = TextSelection.fromPosition(
+                          TextPosition(offset: _controller.text.length),
+                        );
+                      },
+                    ),
+                    onTap: () {
+                      _controller.text = suggestion;
+                      _performSearch(suggestion);
+                    },
+                  );
                 },
               );
-            },
-          ),
-        ],
+            } else if (state is SearchSuggestionError) {
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Error loading suggestions: ${state.message}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
       ],
     );
   }
@@ -260,7 +254,7 @@ class _SearchScreenState extends State<SearchScreen>{
     _loadRecentSearches();
 
     _controller.addListener(() {
-      _generateSuggestions(_controller.text);
+      _onTextChanged(_controller.text);
     });
 
     _scrollableController.addListener(() {
@@ -317,103 +311,102 @@ class _SearchScreenState extends State<SearchScreen>{
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => di<DownloadBloc>(),
-      child: InternetConnectionWrapper(
-        child: Scaffold(
-          backgroundColor: AppColors.primaryBackgroundColor,
-          resizeToAvoidBottomInset: false,
-          body: Stack(
-            children: [
-              SafeArea(
-                child: BlocListener<DownloadBloc, DownloadState>(
-                  listener: (context, state) {
-                    if (state is DownloadOnProgress){
-                      print("Progress : ${state.progress}");
-                    }else if (state is DownloadPaused){
-                      print("Paused");
-                    }
-                    else if (state is DownloadFinished){
-                      print("Downloading Finished");
-                    }
-                  },
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Search Bar
-                      SizedBox(height: 16.h,),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text("Explore",style: TextStyle(color: Colors.white,fontSize: 20),),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(25.0),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: TextField(
-                            controller: _controller,
-                            focusNode: _focusNode,
-                            style: const TextStyle(fontSize: 16),
-                            decoration: InputDecoration(
-                              hintText: 'Search for songs, artists, albums...',
-                              hintStyle: TextStyle(
-                                color: Colors.grey[500],
-                                fontSize: 16,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.search,
-                                color: Colors.grey[600],
-                                size: 24,
-                              ),
-                              suffixIcon: _controller.text.isNotEmpty
-                                  ? IconButton(
-                                icon: Icon(
-                                  Icons.clear,
-                                  color: Colors.grey[600],
-                                  size: 20,
-                                ),
-                                onPressed: () {
-                                  _controller.clear();
-                                  setState(() {
-                                    _isTyping = false;
-                                    _showSearchResults = false;
-                                  });
-                                },
-                              )
-                                  : null,
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 16,
-                              ),
+      child: Scaffold(
+        backgroundColor: AppColors.primaryBackgroundColor,
+        resizeToAvoidBottomInset: false,
+        body: Stack(
+          children: [
+            SafeArea(
+              child: BlocListener<DownloadBloc, DownloadState>(
+                listener: (context, state) {
+                  if (state is DownloadOnProgress){
+                    print("Progress : ${state.progress}");
+                  }else if (state is DownloadPaused){
+                    print("Paused");
+                  }
+                  else if (state is DownloadFinished){
+                    print("Downloading Finished");
+                  }
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Search Bar
+                    SizedBox(height: 16.h,),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text("Explore",style: TextStyle(color: Colors.white,fontSize: 20),),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(25.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
                             ),
-                            onSubmitted: (value) {
-                              _performSearch(value);
-                            },
+                          ],
+                        ),
+                        child: TextField(
+                          controller: _controller,
+                          focusNode: _focusNode,
+                          style: const TextStyle(fontSize: 16),
+                          decoration: InputDecoration(
+                            hintText: 'Search for songs, artists, albums...',
+                            hintStyle: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 16,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Colors.grey[600],
+                              size: 24,
+                            ),
+                            suffixIcon: _controller.text.isNotEmpty
+                                ? IconButton(
+                              icon: Icon(
+                                Icons.clear,
+                                color: Colors.grey[600],
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                _controller.clear();
+                                setState(() {
+                                  _isTyping = false;
+                                  _showSearchResults = false;
+                                });
+                                context.read<SearchSuggestionBloc>().add(ClearSearchSuggestionsEvent());
+                              },
+                            )
+                                : null,
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 16,
+                            ),
                           ),
+                          onSubmitted: (value) {
+                            _performSearch(value);
+                          },
                         ),
                       ),
+                    ),
 
-                      // Main Content Area
-                      Expanded(
-                        child: _buildMainContent(),
-                      ),
-                    ],
-                  ),
+                    // Main Content Area
+                    Expanded(
+                      child: _buildMainContent(),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-
+            ),
+          ],
         ),
+
       ),
     );
   }
@@ -423,7 +416,7 @@ class _SearchScreenState extends State<SearchScreen>{
       return BlocBuilder<SongBloc, SongState>(
         builder: (context, state) {
           if (state is SongLoading) {
-            return  Center(child: CircularProgressIndicator(color: Colors.white,));
+            return  const Center(child: CircularProgressIndicator(color: Colors.white,));
           } else if (state is SongLoaded) {
             List<Song> songs = state.songs.where((s)=> s.category == "Songs").toList();
             dynamic topResult = state.songs.where((s)=> s.category == "Top result").toList().isNotEmpty ?state.songs.where((s)=> s.category == "Top result").first: null ;
@@ -431,7 +424,7 @@ class _SearchScreenState extends State<SearchScreen>{
             List artists = state.songs.where((s)=> s.category == "Artists").toList();
 
             return ListView(
-              physics: BouncingScrollPhysics(),
+              physics: const BouncingScrollPhysics(),
               children: [
                 if(topResult != null)
                   Column(
@@ -448,7 +441,7 @@ class _SearchScreenState extends State<SearchScreen>{
                           borderRadius: BorderRadius.circular(8),
                           child: Image.network(topResult.thumbnails.defaultThumbnail.url, width: 50, height: 50, fit: BoxFit.cover),
                         ),
-                        title: topResult.resultType != "artist" ?  Text(topResult.title,style: TextStyle(color: Colors.white),): Text(topResult.artists.map((artist)=> artist["name"]).join(","),style: TextStyle(color: Colors.white),),
+                        title: topResult.resultType != "artist" ?  Text(topResult.title,style: const TextStyle(color: Colors.white),): Text(topResult.artists.map((artist)=> artist["name"]).join(","),style: const TextStyle(color: Colors.white),),
                         subtitle:topResult.resultType != "artist" ?
                         Text("${topResult.resultType == 'video' ? "song" : topResult.resultType} • ${topResult.artists.map((artist)=> artist['name']).join(",")}", style: TextStyle(color: Colors.white.withOpacity(0.7)),)
                             : Text(topResult.resultType,style: TextStyle(color: Colors.white.withOpacity(0.7)),),
@@ -461,14 +454,10 @@ class _SearchScreenState extends State<SearchScreen>{
                             context.read<PlayerBloc>().add(PlaySongEvent(song: dartz.left(topResult)));
                           }else if(topResult.resultType == "album"){
                             context.read<AlbumBloc>().add(SearchAlbum(albumId: topResult.browseId));
-                            Navigator.push(context, MaterialPageRoute(builder: (context){
-                              return const AlbumScreen();
-                            }));
+                            Navigator.pushNamed(context, Routes.albumScreen);
                           }else if(topResult.resultType == "artist"){
-                            context.read<ArtistBloc>().add(FetchArtistEvent(artistId: topResult.browseId));
-                            Navigator.push(context, MaterialPageRoute(builder: (context){
-                              return  ArtistDetailScreen(artistId: topResult.browseId,);
-                            }));
+                            context.read<ArtistBloc>().add(FetchArtistEvent(artistId: topResult.artists[0]['id']));
+                            Navigator.pushNamed(context, Routes.artistDetailScreen,arguments: {"artistId":topResult.artists[0]['id']});
                           }
                         },
                       ),
@@ -476,14 +465,13 @@ class _SearchScreenState extends State<SearchScreen>{
                   ),
 
                 // Songs Section
-
-               _buildSectionHeaderWithViewAll(context, "Songs", (){
-                 context.read<SearchBloc>().add(SearchSongsRequested(query: _controller.text));
-                           Navigator.pushNamed(context, Routes.songsResultScreen);
-               }),
+                buildSectionHeaderWithViewAll(context, "Songs", (){
+                  context.read<SearchBloc>().add(SearchSongsRequested(query: _controller.text));
+                  Navigator.pushNamed(context, Routes.songsResultScreen);
+                }),
 
                 ListView.builder(
-                    physics: NeverScrollableScrollPhysics(),
+                    physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     itemCount: songs.length <5 ? songs.length: 5,
                     itemBuilder: (context, index) {
@@ -494,9 +482,10 @@ class _SearchScreenState extends State<SearchScreen>{
 
                 // Albums Section
                 if(albums.isNotEmpty) ...[
-                   _buildSectionHeaderWithViewAll(context, "Albums", (){
-
-                   }),
+                  buildSectionHeaderWithViewAll(context, "Albums", (){
+                    context.read<SearchBloc>().add(SearchAlbumsRequested(query: _controller.text));
+                    Navigator.pushNamed(context, Routes.albumsResultScreen);
+                  }),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: SizedBox(
@@ -504,7 +493,7 @@ class _SearchScreenState extends State<SearchScreen>{
                       child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           shrinkWrap: true,
-                          physics: BouncingScrollPhysics(),
+                          physics: const BouncingScrollPhysics(),
                           itemCount: albums.length<5 ? albums.length : 5,
                           itemBuilder: (context,index){
                             final Song album = albums[index];
@@ -561,61 +550,61 @@ class _SearchScreenState extends State<SearchScreen>{
 
                 // Artists Section
                 if(artists.isNotEmpty) ...[
-                  _buildSectionHeaderWithViewAll(context, "Artists", (){
-
+                  buildSectionHeaderWithViewAll(context, "Artists", (){
+                    context.read<SearchBloc>().add(SearchArtistsRequested(query: _controller.text));
+                    Navigator.pushNamed(context, Routes.artistsResultScreen);
                   }),
-          Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: SizedBox(
-          height: 250.h,
-          child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          shrinkWrap: true,
-          physics: BouncingScrollPhysics(),
-          itemCount: artists.length<5 ? artists.length : 5,
-          itemBuilder: (context,index){
-          final Song artist = artists[index];
-          return   GestureDetector(
-          onTap: (){
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: SizedBox(
+                      height: 250.h,
+                      child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          shrinkWrap: true,
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: artists.length<5 ? artists.length : 5,
+                          itemBuilder: (context,index){
+                            final Song artist = artists[index];
+                            return   GestureDetector(
+                              onTap: (){
+                                context.read<ArtistBloc>().add(FetchArtistEvent(artistId: artist.browseId));
+                                Navigator.pushNamed(context, Routes.artistDetailScreen,arguments: {"artistId": artist.browseId});
+                              },
+                              child: Container(
+                                width: 170.w,
+                                margin: const EdgeInsets.only(right: 16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      height: 160,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        image: DecorationImage(
+                                          image: NetworkImage(artist.thumbnails.highThumbnail.url),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
 
-          context.read<ArtistBloc>().add(FetchArtistEvent(artistId: artist.browseId));
-          Navigator.pushNamed(context, Routes.artistDetailScreen,arguments: {"artistId": artist.browseId});
-          },
-          child: Container(
-          width: 170.w,
-          margin: const EdgeInsets.only(right: 16),
-          child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-          Container(
-          height: 160,
-          decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          image: DecorationImage(
-          image: NetworkImage(artist.thumbnails.highThumbnail.url),
-          fit: BoxFit.cover,
-          ),
-          ),
-          ),
-          const SizedBox(height: 12),
+                                    Text(
+                                      artist.artists.map((artist)=> artist['name']).join(","),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
 
-          Text(
-          artist.artists.map((artist)=> artist['name']).join(","),
-          style: const TextStyle(
-          color: Colors.white,
-          fontSize: 15,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          ),
-
-          ],
-          ),
-          ),
-          );
-          }),
-          ),
-          ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                    ),
+                  ),
                 ],
               ],
             );
@@ -625,46 +614,10 @@ class _SearchScreenState extends State<SearchScreen>{
           return const SizedBox();
         },
       );
-    } else if (_isTyping && (_filteredRecentSearches.isNotEmpty || _suggestions.isNotEmpty)) {
+    } else if (_isTyping && (_filteredRecentSearches.isNotEmpty || _controller.text.isNotEmpty)) {
       return _buildSuggestions();
     } else {
       return _buildRecentSearches();
     }
-  }
-  Widget _buildSectionHeaderWithViewAll(BuildContext context, String title, VoidCallback onViewAllTap) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 19,
-
-            ),
-          ),
-          GestureDetector(
-            onTap: onViewAllTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Text(
-                'VIEW ALL',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:jazz/features/auth_feature/data/models/friend_request_model.dart';
 
 abstract class FriendRequestDataSource {
@@ -22,19 +23,19 @@ class FirebaseFriendRequestDataSource implements FriendRequestDataSource {
     // Check if a friend request already exists with the same sender and receiver
     final querySnapshot = await _firestore
         .collection('friendRequests')
-        .where('senderId', isEqualTo: senderId)
+        .where('senderId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
         .where('receiverId', isEqualTo: receiverId)
         .get();
     final querySnapshot2 = await _firestore
         .collection('friendRequests')
         .where('senderId', isEqualTo: receiverId)
-        .where('receiverId', isEqualTo: senderId)
+        .where('receiverId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
         .get();
 
     // Only add a new request if no existing request is found
     if (querySnapshot.docs.isEmpty && querySnapshot2.docs.isEmpty) {
       await _firestore.collection('friendRequests').add({
-        'senderId': senderId,
+        'senderId': FirebaseAuth.instance.currentUser!.uid,
         'receiverId': receiverId,
         'status': 'pending',
         'createdAt': Timestamp.now(),
@@ -92,7 +93,7 @@ class FirebaseFriendRequestDataSource implements FriendRequestDataSource {
 
     return _firestore
         .collection('friendRequests')
-        .where('senderId', isEqualTo: userId)
+        .where('senderId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
         .where('status', isEqualTo: 'pending')
         .snapshots()
         .map((snapshot) {
@@ -109,7 +110,7 @@ class FirebaseFriendRequestDataSource implements FriendRequestDataSource {
   Stream<List<FriendRequestModel>> getReceivedRequests(String userId) {
     return _firestore
         .collection('friendRequests')
-        .where('receiverId', isEqualTo: userId)
+        .where('receiverId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
         .where('status', isEqualTo: 'pending')
         .snapshots()
         .map((snapshot) {

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jazz/core/app_color.dart';
+import 'package:jazz/core/routes.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc.dart';
 
 class ChangeEmailScreen extends StatefulWidget {
@@ -401,10 +402,10 @@ class EmailChangeSuccessScreen extends StatelessWidget {
                   alignment: Alignment.topRight,
                   child: IconButton(
                     icon: Icon(Icons.close, color: Colors.white, size: 24.r),
-                    onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                    onPressed: () => Navigator.pushNamed(
                         context,
-                        '/profileScreen',
-                            (route) => false
+                        Routes.libraryScreen,
+
                     ),
                   ),
                 ),
@@ -482,10 +483,10 @@ class EmailChangeSuccessScreen extends StatelessWidget {
 
                         // Back to account button
                         ElevatedButton(
-                          onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                          onPressed: () => Navigator.pushNamed(
                               context,
-                              '/profileScreen',
-                                  (route) => false
+                              Routes.libraryScreen,
+
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,

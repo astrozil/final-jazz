@@ -30,7 +30,7 @@ class FriendRequestBloc extends Bloc<FriendRequestEvent, FriendRequestState> {
   StreamSubscription? _sentRequestsSubscription;
   StreamSubscription<List<FriendRequestModel>>? _allRequestsSubscription;
 
-  String _currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
 
   FriendRequestBloc(
       this._sendFriendRequest,
@@ -60,7 +60,7 @@ class FriendRequestBloc extends Bloc<FriendRequestEvent, FriendRequestState> {
       SetCurrentUserIdEvent event,
       Emitter<FriendRequestState> emit,
       ) {
-    _currentUserId = event.userId;
+
   }
   Future<void> _onGetAllRequests(GetAllRequestsEvent event,Emitter<FriendRequestState> emit)async{
     emit(FriendRequestLoading());
@@ -90,7 +90,7 @@ class FriendRequestBloc extends Bloc<FriendRequestEvent, FriendRequestState> {
       ) async {
 
     try {
-      await _sendFriendRequest.execute(_currentUserId, event.receiverId);
+      await _sendFriendRequest.execute(FirebaseAuth.instance.currentUser!.uid, event.receiverId);
 
     } catch (e) {
       emit(FriendRequestError(e.toString()));
@@ -113,7 +113,7 @@ class FriendRequestBloc extends Bloc<FriendRequestEvent, FriendRequestState> {
       Emitter<FriendRequestState> emit
       )async{
     try{
-      await _unfriendUseCase.execute(event.friendUserId, _currentUserId);
+      await _unfriendUseCase.execute(event.friendUserId, FirebaseAuth.instance.currentUser!.uid);
     }catch(e){
       emit(FriendRequestError(e.toString()));
     }
@@ -124,7 +124,7 @@ class FriendRequestBloc extends Bloc<FriendRequestEvent, FriendRequestState> {
       ) async {
 
     try {
-      await _acceptFriendRequest.execute(event.requestId, _currentUserId);
+      await _acceptFriendRequest.execute(event.requestId, FirebaseAuth.instance.currentUser!.uid);
 
     } catch (e) {
       emit(FriendRequestError(e.toString()));
@@ -139,7 +139,7 @@ class FriendRequestBloc extends Bloc<FriendRequestEvent, FriendRequestState> {
       ) async {
 
     try {
-      await _rejectFriendRequest.execute(event.requestId, _currentUserId);
+      await _rejectFriendRequest.execute(event.requestId, FirebaseAuth.instance.currentUser!.uid);
 
     } catch (e) {
       emit(FriendRequestError(e.toString()));
@@ -153,7 +153,7 @@ class FriendRequestBloc extends Bloc<FriendRequestEvent, FriendRequestState> {
 
     _receivedRequestsSubscription?.cancel();
     _receivedRequestsSubscription = _getReceivedFriendRequests
-        .execute(_currentUserId)
+        .execute(FirebaseAuth.instance.currentUser!.uid)
         .listen(
           (requests) => add(_ReceivedFriendRequestsUpdated(requests)),
       onError: (error) => add(_FriendRequestError(error.toString())),
@@ -167,7 +167,7 @@ class FriendRequestBloc extends Bloc<FriendRequestEvent, FriendRequestState> {
 
     _sentRequestsSubscription?.cancel();
     _sentRequestsSubscription = _getSentFriendRequests
-        .execute(_currentUserId)
+        .execute(FirebaseAuth.instance.currentUser!.uid)
         .listen(
           (requests) => add(_SentFriendRequestsUpdated(requests)),
       onError: (error) => add(_FriendRequestError(error.toString())),

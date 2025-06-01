@@ -8,7 +8,7 @@ class SharedSongModel extends SharedSong {
     required String receiverId,
     required String songId,
     required String songName,
-    required List artistName,
+    required String artistName,
     required String type,
     required String albumArt,
     required String message,

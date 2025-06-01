@@ -11,6 +11,7 @@ class ArtistBioScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.primaryBackgroundColor,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         backgroundColor: AppColors.primaryBackgroundColor,
         leading: GestureDetector(
           onTap: (){
@@ -22,15 +23,18 @@ class ArtistBioScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Biography",style: TextStyle(color: Colors.white,fontSize: 25.sp),),
-            SizedBox(height: 16.h,),
-            bio != ""?
-            Text(bio,style: TextStyle(color: Colors.white.withOpacity(0.6),fontSize: 18.sp),):
-                Text("Artist Biography not found.",style: TextStyle(color: Colors.white.withOpacity(0.6),fontSize: 18.sp))
-          ],
+        child: SingleChildScrollView(
+          physics: BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Biography",style: TextStyle(color: Colors.white,fontSize: 25.sp),),
+              SizedBox(height: 16.h,),
+              bio != ""?
+              Text(bio,style: TextStyle(color: Colors.white.withOpacity(0.6),fontSize: 18.sp),):
+                  Text("Artist Biography not found.",style: TextStyle(color: Colors.white.withOpacity(0.6),fontSize: 18.sp))
+            ],
+          ),
         ),
       ),
     );

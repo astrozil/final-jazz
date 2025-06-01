@@ -100,7 +100,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
     return Scaffold(
       backgroundColor: AppColors.primaryBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.secondaryBackgroundColor,
+        automaticallyImplyLeading: false,
+        backgroundColor: AppColors.primaryBackgroundColor,
         elevation: 0,
         centerTitle: true,
         title: const Text(
@@ -111,7 +112,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new_outlined, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),

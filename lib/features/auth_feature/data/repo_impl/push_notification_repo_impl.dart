@@ -85,7 +85,7 @@ class PushNotificationRepositoryImpl implements PushNotificationRepository {
 
   @override
   Future<void> sendPushNotification(String receiverToken, String title, String body, Map<String, dynamic> data) async {
-
+     print(data);
     try {
       final accessToken = await getAccessToken();
 

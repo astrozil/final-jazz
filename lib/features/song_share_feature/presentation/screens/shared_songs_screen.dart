@@ -45,7 +45,7 @@ class _SharedSongsScreenState extends State<SharedSongsScreen> {
     return CupertinoPageScaffold(
       backgroundColor: AppColors.primaryBackgroundColor,
       navigationBar: CupertinoNavigationBar(
-        backgroundColor: AppColors.secondaryBackgroundColor,
+        backgroundColor: AppColors.primaryBackgroundColor,
         middle: const Text(
           'Shared Songs',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -159,7 +159,7 @@ class _ReceivedSongsTabState extends State<ReceivedSongsTab>
               PlaySongEvent(song: dartz.left(Song(
                   url: "",
                   title: sharedSong.songName,
-                  artists: sharedSong.artistName,
+                  artists: sharedSong.artistName.split(","),
                   id: sharedSong.songId,
                   category: sharedSong.type,
                   browseId: "",
@@ -239,7 +239,7 @@ class _SentSongsTabState extends State<SentSongsTab>
               PlaySongEvent(song: dartz.left(Song(
                   url: "",
                   title: sharedSong.songName,
-                  artists: sharedSong.artistName,
+                  artists: sharedSong.artistName.split(","),
                   id: sharedSong.songId,
                   category: sharedSong.type,
                   browseId: "",

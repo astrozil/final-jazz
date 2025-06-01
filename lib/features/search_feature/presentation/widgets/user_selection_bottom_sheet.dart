@@ -90,7 +90,7 @@ class _UserSelectionBottomSheetState extends State<UserSelectionBottomSheet> {
           receiverId: user.id,
           songId: widget.song.id,
           songName: widget.song.title,
-          artistName: widget.song.artists,
+          artistName: widget.song.artists.map((artist)=> artist['name']).join(","),
           albumArt: widget.song.thumbnails.highThumbnail.url,
           type: widget.song.category,
           message: _messageController.text,

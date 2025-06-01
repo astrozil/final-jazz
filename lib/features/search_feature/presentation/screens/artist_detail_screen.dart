@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:jazz/core/widgets/confirm_widget.dart';
+import 'package:jazz/core/widgets/song_widget.dart';
 import 'package:jazz/features/auth_feature/domain/entities/user.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/user_bloc/user_bloc.dart';
@@ -47,9 +48,9 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
     return Scaffold(
 
       backgroundColor: AppColors.primaryBackgroundColor,
-      body: BlocBuilder<ArtistBloc, ArtistState>(
+      body: BlocBuilder<ArtistBloc, ArtistFetchSuccess>(
         builder: (context, state) {
-          if (state is ArtistInitial) {
+          if (state.isLoading) {
             return CustomScrollView(
               slivers: [
                 // Keep the SliverAppBar visible during loading
@@ -74,16 +75,10 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
 
               ],
             );
-          } else if (state is ArtistFetchError) {
-            return Center(
-              child: Text(
-                'Error: ${state.errorMessage}',
-                style: const TextStyle(color: Colors.white),
-              ),
-            );
-          } else if (state is ArtistFetchSuccess) {
-            final Artist artist = state.artist;
+          }  else if (!state.isLoading) {
+            final Artist artist = state.artist!;
             return CustomScrollView(
+              physics: BouncingScrollPhysics(),
               slivers: [
                 // Hero Section with Artist Image
                 SliverAppBar(
@@ -325,9 +320,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                                         ),
                                         child: IconButton(
                                           onPressed: () {
-                                            Navigator.of(context).push(MaterialPageRoute(builder: (context){
-                                              return ArtistBioScreen(bio: artist.description);
-                                            }));
+                                           Navigator.pushNamed(context, Routes.artistBioScreen,arguments: {'bio':artist.description});
                                           },
                                           icon: const Icon(Icons.info_outline, color: Colors.white, size: 24),
                                         ),
@@ -378,483 +371,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                             itemCount: artist.songs.length, // Show ALL songs
                             itemBuilder: (context, index) {
                               final song = artist.songs[index];
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, ),
-                                child: ListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  leading: Container(
-
-                                     width: 50.w,
-                                    alignment: Alignment.center,
-                                    child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(8.r),
-                                        child: Image.network(song.thumbnails.highThumbnail.url, height: 50.h,width: 50.w,fit: BoxFit.cover,)),
-                                  ),
-                                  title: Text(
-                                    song.title,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    artist.name,
-                                    style: const TextStyle(
-                                      color: Colors.white60,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  trailing: GestureDetector(
-                                    onTap:  () {
-                                      context.read<DownloadedOrNotBloc>().add(CheckIfDownloadedEvent(song.id,song.title,song.artists.first['name']));
-                                      showModalBottomSheet(
-                                          context: context,
-                                          enableDrag: true,
-                                          backgroundColor: const Color.fromRGBO(
-                                              37, 39, 40, 1),
-                                          shape: const RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.vertical(
-                                                  top:
-                                                  Radius.circular(
-                                                      20))),
-                                          builder: (context) {
-                                            return Container(
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                                    child: Row(
-                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                      children: [
-                                                        SizedBox(width: 80.w,),
-                                                        Container(
-                                                          margin: const EdgeInsets.only(top: 8),
-                                                          height: 4,
-                                                          width: 40,
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.grey[300],
-                                                            borderRadius: BorderRadius.circular(2),
-                                                          ),
-                                                        ),
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            Navigator.pop(context);
-                                                          },
-                                                          child:  Text('Cancel',style: TextStyle(color: Colors.white.withOpacity(0.8)),),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 30.h,),
-                                                  Padding(
-                                                    padding: const EdgeInsets.all(16.0),
-                                                    child: GestureDetector(
-                                                      onTap: () {
-                                                        context
-                                                            .read<PlaylistBloc>()
-                                                            .add(FetchPlaylists());
-                                                        showModalBottomSheet(
-                                                          context: context,
-                                                          shape: const RoundedRectangleBorder(
-                                                            borderRadius: BorderRadius.vertical(
-                                                                top: Radius.circular(20)),
-                                                          ),
-                                                          isScrollControlled: true,
-                                                          backgroundColor:
-                                                          Color.fromRGBO(37, 39, 40, 1),
-                                                          builder: (_) => Padding(
-                                                            padding: EdgeInsets.only(
-                                                              bottom: MediaQuery.of(context)
-                                                                  .viewInsets
-                                                                  .bottom,
-                                                            ),
-                                                            child: Container(
-                                                              width: double.infinity,
-                                                              padding: const EdgeInsets.all(16),
-                                                              child: Column(
-                                                                mainAxisSize: MainAxisSize.min,
-                                                                crossAxisAlignment:
-                                                                CrossAxisAlignment.start,
-                                                                children: [
-                                                                  Padding(
-                                                                    padding: const EdgeInsets.only(
-                                                                        bottom: 16.0),
-                                                                    child: Row(
-                                                                      mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .spaceBetween,
-                                                                      children: [
-                                                                        SizedBox(
-                                                                          width: 80.w,
-                                                                        ),
-                                                                        Text(
-                                                                          "Playlists",
-                                                                          style: TextStyle(
-                                                                            color: Colors.white,
-                                                                            fontSize: 20,
-                                                                          ),
-                                                                        ),
-                                                                        TextButton(
-                                                                          onPressed: () {
-                                                                            Navigator.pop(context);
-                                                                          },
-                                                                          child: Text(
-                                                                            'Cancel',
-                                                                            style: TextStyle(
-                                                                                color: Colors.white
-                                                                                    .withOpacity(
-                                                                                    0.8)),
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                  BlocBuilder<PlaylistBloc,
-                                                                      PlaylistState>(
-                                                                    builder:
-                                                                        (context, playlistState) {
-                                                                      if (playlistState
-                                                                      is PlaylistLoaded &&
-                                                                          !playlistState.isLoading) {
-                                                                        final playlists =
-                                                                            playlistState
-                                                                                .userPlaylists;
-                                                                        if (playlists.isNotEmpty) {
-                                                                          return Container(
-                                                                            constraints:
-                                                                            const BoxConstraints(
-                                                                                maxHeight: 300),
-                                                                            child: ListView.builder(
-                                                                              shrinkWrap: true,
-                                                                              itemCount:
-                                                                              playlists.length,
-                                                                              itemBuilder:
-                                                                                  (context, index) {
-                                                                                final playlist =
-                                                                                playlists[index];
-                                                                                return ListTile(
-
-                                                                                  leading: Container(
-                                                                                    width: 40,
-                                                                                    height: 40,
-                                                                                    decoration:
-                                                                                    BoxDecoration(
-                                                                                      color: Colors
-                                                                                          .transparent,
-                                                                                      borderRadius:
-                                                                                      BorderRadius
-                                                                                          .circular(
-                                                                                          8),
-                                                                                    ),
-                                                                                    child: Icon(
-                                                                                      Icons
-                                                                                          .my_library_music,
-                                                                                      color: Colors
-                                                                                          .grey
-                                                                                          .withOpacity(
-                                                                                          0.5),
-                                                                                      size: 40.sp,
-                                                                                    ),
-                                                                                  ),
-                                                                                  title: Text(
-                                                                                    playlist['title'],
-                                                                                    style: const TextStyle(
-                                                                                        color: Colors
-                                                                                            .white),
-                                                                                  ),
-                                                                                  subtitle: Text(
-                                                                                    "${playlist['tracks'].length} songs",
-                                                                                    style: TextStyle(
-                                                                                        color: Colors
-                                                                                            .grey[
-                                                                                        400]),
-                                                                                  ),
-                                                                                  onTap: () {
-
-                                                                                    context
-                                                                                        .read<
-                                                                                        PlaylistBloc>()
-                                                                                        .add(
-                                                                                        AddSongToPlaylist(
-                                                                                          songId:
-                                                                                          song.id,
-                                                                                          playlistId:
-                                                                                          playlist['playlistId'],
-                                                                                        ));
-                                                                                    Navigator.pop(
-                                                                                        context);
-                                                                                    ScaffoldMessenger.of(context)
-                                                                                        .hideCurrentSnackBar();
-                                                                                    ScaffoldMessenger.of(context)
-                                                                                        .showSnackBar(CustomSnackBar.show(
-                                                                                        message:
-                                                                                        "Added to your playlist",
-                                                                                        backgroundColor: AppColors
-                                                                                            .snackBarBackgroundColor)
-
-                                                                                    );
-                                                                                  },
-                                                                                );
-                                                                              },
-                                                                            ),
-                                                                          );
-                                                                        }
-                                                                      }
-                                                                      return SizedBox(
-                                                                        height: 100,
-                                                                        child: Center(
-                                                                          child: Text(
-                                                                            "No playlists found. Create one.",
-                                                                            style: TextStyle(
-                                                                                color:
-                                                                                Colors.grey[400]),
-                                                                          ),
-                                                                        ),
-                                                                      );
-                                                                    },
-                                                                  ),
-                                                                  const SizedBox(height: 16),
-                                                                  ElevatedButton(
-                                                                    onPressed: () {
-                                                                      Navigator.pushNamed(context,
-                                                                          Routes.newPlaylistScreen);
-                                                                    },
-                                                                    style: ElevatedButton.styleFrom(
-                                                                      backgroundColor: Colors.white,
-                                                                      foregroundColor: Colors.black,
-                                                                      minimumSize: const Size(
-                                                                          double.infinity, 50),
-                                                                      shape: RoundedRectangleBorder(
-                                                                        borderRadius:
-                                                                        BorderRadius.circular(15),
-                                                                      ),
-                                                                    ),
-                                                                    child: const Row(
-                                                                      mainAxisAlignment:
-                                                                      MainAxisAlignment.center,
-                                                                      children: [
-                                                                        Icon(Icons.add, size: 20),
-                                                                        SizedBox(width: 8),
-                                                                        Text("Create New Playlist"),
-                                                                      ],
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        );
-                                                      },
-                                                      child: Row(
-                                                        children: [
-                                                          Icon(Icons.playlist_add,color: Colors.grey.withOpacity(0.6),size: 25,),
-                                                          SizedBox(width: 20.w,),
-                                                          Text("Add to playlist", style: TextStyle(color: Colors.white, fontSize: 18.sp ),)
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  BlocBuilder<DownloadedOrNotBloc, DownloadedOrNotState>(
-                                                    builder: (context, state) {
-                                                      if(state is DownloadedSongState){
-                                                        return  Padding(
-                                                          padding: const EdgeInsets.all(16.0),
-                                                          child: InkWell(
-                                                            splashFactory: NoSplash.splashFactory,
-                                                            highlightColor: Colors.transparent,
-                                                            onTap: (){
-                                                              Navigator.pop(context);
-                                                              context.read<DownloadedOrNotBloc>().add(DeleteDownloadedSongEvent(song.id, song.title,song.artists.first['name']));
-                                                              ScaffoldMessenger.of(context)
-                                                                  .hideCurrentSnackBar();
-                                                              ScaffoldMessenger.of(context)
-                                                                  .showSnackBar(CustomSnackBar.show(
-                                                                  message:
-                                                                  "Removed from downloaded content",
-                                                                  backgroundColor: AppColors
-                                                                      .snackBarBackgroundColor));
-                                                            },
-                                                            child: Row(
-                                                              children: [
-                                                                Image.asset("assets/icons/downloaded.png"),
-                                                                SizedBox(width: 20.w,),
-                                                                Text("Remove from downloaded content", style: TextStyle(color: Colors.white, fontSize: 18.sp ),)
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        );
-                                                      }else{
-                                                        return  Padding(
-                                                          padding: const EdgeInsets.all(16.0),
-                                                          child: InkWell(
-                                                            splashFactory: NoSplash.splashFactory,
-                                                            highlightColor: Colors.transparent,
-                                                            onTap: (){
-                                                              Navigator.pop(context);
-                                                              context.read<DownloadBloc>().add(
-                                                                  DownloadSongEvent(DownloadRequest(videoID:song.id,title: song.title,artist: song.artists.first['name'],thumbnail:song.thumbnails.highThumbnail.url,videoUrl: "https://www.youtube.com/watch?v=${song.id}")));
-                                                              ScaffoldMessenger.of(context)
-                                                                  .hideCurrentSnackBar();
-                                                              ScaffoldMessenger.of(context)
-                                                                  .showSnackBar(CustomSnackBar.show(
-                                                                  message:
-                                                                  "Added to download queue",
-                                                                  backgroundColor: AppColors
-                                                                      .snackBarBackgroundColor));
-                                                            },
-                                                            child: Row(
-                                                              children: [
-                                                                Image.asset("assets/icons/download.png"),
-                                                                SizedBox(width: 20.w,),
-                                                                Text("Download", style: TextStyle(color: Colors.white, fontSize: 18.sp ),)
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        );
-                                                      }
-                                                    },
-                                                  ),
-                                                  Padding(
-                                                    padding: const EdgeInsets.all(16.0),
-                                                    child: InkWell(
-                                                      splashFactory: NoSplash.splashFactory,
-                                                      highlightColor: Colors.transparent,
-                                                      onTap: (){
-                                                        Navigator.pop(context);
-                                                        if(song.artists.length==1){
-                                                          context.read<ArtistBloc>().add(FetchArtistEvent(artistId: song.artists.first['id']));
-                                                          Navigator.pushNamed(context, Routes.artistDetailScreen);
-                                                        }else if(song.artists.length >1){
-                                                          showModalBottomSheet(
-                                                              context: context,
-                                                              enableDrag: true,
-                                                              backgroundColor: const Color.fromRGBO(
-                                                                  37, 39, 40, 1),
-                                                              shape: const RoundedRectangleBorder(
-                                                                  borderRadius:
-                                                                  BorderRadius.vertical(
-                                                                      top:
-                                                                      Radius.circular(
-                                                                          20))),
-                                                              builder: (context){
-                                                                return Container(
-                                                                    child: Column(
-                                                                      mainAxisSize: MainAxisSize.min,
-                                                                      children: [
-                                                                        Padding(
-                                                                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                                                          child: Row(
-                                                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                            children: [
-                                                                              SizedBox(width: 80.w,),
-                                                                              Container(
-                                                                                margin: const EdgeInsets.only(top: 8),
-                                                                                height: 4,
-                                                                                width: 40,
-                                                                                decoration: BoxDecoration(
-                                                                                  color: Colors.grey[300],
-                                                                                  borderRadius: BorderRadius.circular(2),
-                                                                                ),
-                                                                              ),
-                                                                              TextButton(
-                                                                                onPressed: () {
-                                                                                  Navigator.pop(context);
-                                                                                },
-                                                                                child:  Text('Cancel',style: TextStyle(color: Colors.white.withOpacity(0.8)),),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        ),
-                                                                        SizedBox(height: 30.h,),
-                                                                        SizedBox(
-                                                                          height: 200.h,
-                                                                          child: ListView.builder(
-                                                                              itemCount: song.artists.length,
-                                                                              itemBuilder: (context,index){
-                                                                                return Padding(
-                                                                                  padding: const EdgeInsets.all(16.0),
-                                                                                  child: InkWell(
-                                                                                    splashFactory: NoSplash.splashFactory,
-                                                                                    highlightColor: Colors.transparent,
-                                                                                    onTap: (){
-                                                                                      context.read<ArtistBloc>().add(FetchArtistEvent(artistId: song.artists[index]['id']));
-                                                                                      Navigator.pushNamed(context, Routes.artistDetailScreen);
-                                                                                    },
-                                                                                    child: Row(
-                                                                                      children: [
-                                                                                        Image.asset("assets/icons/artist.png"),
-                                                                                        SizedBox(width: 20.w,),
-                                                                                        Text(song.artists[index]['name'], style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.normal ),)
-                                                                                      ],
-                                                                                    ),
-                                                                                  ),
-                                                                                );
-                                                                              }
-                                                                          ),
-                                                                        ),
-                                                                      ],
-                                                                    )
-                                                                );
-                                                              });
-                                                        }
-                                                      },
-                                                      child: Row(
-                                                        children: [
-                                                          Image.asset("assets/icons/artist.png"),
-                                                          SizedBox(width: 20.w,),
-                                                          Text("Go to artist", style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.normal ),)
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Padding(
-                                                    padding: const EdgeInsets.all(16.0),
-                                                    child: GestureDetector(
-                                                      onTap: () {
-                                                        showCustomBottomSheet(
-                                                            context: context,
-                                                            builder: (context) =>
-                                                                UserSelectionBottomSheet(
-                                                                    song: song),
-                                                            backgroundColor: AppColors
-                                                                .primaryBackgroundColor);
-                                                      },
-                                                      child: Row(
-                                                        children: [
-                                                          Image.asset("assets/icons/share.png",color: Colors.grey.withOpacity(0.6),),
-                                                          SizedBox(width: 20.w,),
-                                                          Text("Share", style: TextStyle(color: Colors.white, fontSize: 18.sp ),)
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 50.h,),
-                                                ],
-                                              ),
-                                            );
-                                          });
-                                    },
-                                    child: Icon(
-                                      Icons.more_horiz_outlined, color: Colors.white60, size: 20,
-
-                                    ),
-                                  ),
-                                  onTap: () {
-                                    final isFromAlbum = context.read<PlayerBloc>().state.isFromAlbum;
-                                    if (isFromAlbum) {
-                                      context.read<PlayerBloc>().add(
-                                          UpdateStateEvent(
-                                              state: context.read<PlayerBloc>().state.copyWith(isFromAlbum: false)
-                                          )
-                                      );
-                                    }
-                                    context.read<PlayerBloc>().add(PlaySongEvent(song: dartz.left(song)));
-                                  },
-                                ),
-                              );
+                              return songWidget(context: context, song: song);
                             },
                           ),
                           const SizedBox(height: 32),
@@ -863,12 +380,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         // Featured Albums Section
                         if (artist.albums.isNotEmpty) ...[
                           _buildSectionHeaderWithViewAll(context, 'Featured Albums', () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AllAlbumsScreen(albums: artist.albums, artistName: artist.name),
-                              ),
-                            );
+                            Navigator.pushNamed(context, Routes.allAlbumScreen,arguments: {"albums": artist.albums,"artistName": artist.name});
                           }),
                           const SizedBox(height: 16),
                           SizedBox(
@@ -890,10 +402,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                                           context.read<AlbumBloc>().add(
                                               SearchAlbum(albumId: album.browseId)
                                           );
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(builder: (context) => AlbumScreen()),
-                                          );
+                                        Navigator.pushNamed(context, Routes.albumScreen);
                                         },
                                         child: Container(
                                           height: 160,
@@ -946,12 +455,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                         // EP & Singles Section
                         if (artist.singles.isNotEmpty) ...[
                           _buildSectionHeaderWithViewAll(context, 'EP & Singles', () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AllSinglesScreen(singles: artist.singles, artistName: artist.name),
-                              ),
-                            );
+                           Navigator.pushNamed(context, Routes.allSingleScreen,arguments: {"singles":artist.singles,"artistName": artist.name});
                           }),
                           const SizedBox(height: 16),
                           SizedBox(
@@ -967,10 +471,7 @@ class _ArtistDetailScreenState extends State<ArtistDetailScreen> {
                                     context.read<AlbumBloc>().add(
                                         SearchAlbum(albumId: single.browseId)
                                     );
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => AlbumScreen()),
-                                    );
+                                  Navigator.pushNamed(context, Routes.albumScreen);
                                   },
                                   child: Container(
                                     width: 170.w,

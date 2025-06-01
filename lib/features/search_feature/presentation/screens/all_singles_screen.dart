@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jazz/core/app_color.dart';
+import 'package:jazz/core/routes.dart';
 
 import '../bloc/albumBloc/album_bloc.dart';
 import 'album_Screen.dart';
@@ -54,10 +55,7 @@ class AllSinglesScreen extends StatelessWidget {
                 context.read<AlbumBloc>().add(
                     SearchAlbum(albumId: single.browseId)
                 );
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AlbumScreen()),
-                );
+               Navigator.pushNamed(context, Routes.albumScreen);
               },
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

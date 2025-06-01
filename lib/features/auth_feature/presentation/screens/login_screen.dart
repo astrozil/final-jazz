@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
-      Navigator.pushNamedAndRemoveUntil(context, Routes.searchScreen, (Route<dynamic> route)=> false);
+      Navigator.pushNamedAndRemoveUntil(context, Routes.homeScreen, (Route<dynamic> route)=> false);
     }else if (state is AuthFailure) {
       // Handle authentication failure
 
@@ -112,6 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   },
   child: Scaffold(
+    backgroundColor: AppColors.primaryBackgroundColor,
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [

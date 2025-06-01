@@ -187,6 +187,7 @@ class _LyricsScreenState extends State<LyricsScreen> with SingleTickerProviderSt
             );
           },
           child: Column(
+
             children: [
               Expanded(
                 child: ListView.builder(
@@ -223,7 +224,7 @@ class _LyricsScreenState extends State<LyricsScreen> with SingleTickerProviderSt
                                 : Colors.white.withOpacity(0.5),
                             letterSpacing: 0.5,
                           ),
-                          textAlign: TextAlign.center,
+                          textAlign: TextAlign.start,
                         ),
                       ),
                     );

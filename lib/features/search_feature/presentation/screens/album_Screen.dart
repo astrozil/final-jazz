@@ -180,16 +180,7 @@ class AlbumScreen extends StatelessWidget {
                 if (album.description.isNotEmpty)
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AlbumDescriptionScreen(
-                            albumTitle: album.title,
-                            artist: album.artist,
-                            description: album.description,
-                          ),
-                        ),
-                      );
+                     Navigator.pushNamed(context, Routes.albumDescriptionScreen,arguments: {'albumTitle': album.title,'artist':album.artist,'description':album.description});
                     },
                     child: Container(
                       width: double.infinity,

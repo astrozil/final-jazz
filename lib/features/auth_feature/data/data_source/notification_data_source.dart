@@ -31,11 +31,10 @@ class FirebaseNotificationDataSource implements NotificationDataSource {
   @override
   Stream<List<NotificationModel>> getUserNotifications() {
 
-    final String userId = FirebaseAuth.instance.currentUser!.uid;
-    print(userId);
+
     return _firestore
         .collection('notifications')
-        .where('userId', isEqualTo: userId)
+        .where('userId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {

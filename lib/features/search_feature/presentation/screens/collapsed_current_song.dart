@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:jazz/core/app_color.dart';
 import 'package:jazz/features/search_feature/domain/entities/song.dart';
 import 'package:jazz/features/stream_feature/presentation/bloc/playerBloc/player_bloc.dart';
@@ -120,19 +121,30 @@ class CollapsedCurrentSong extends StatelessWidget {
       child: Row(
         children: [
           // Thumbnail with rounded corners
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.memory(
-              downloadedSong.image!,
-              width: 50,
-              height: 50,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: 50,
-                height: 50,
-                color: isDarkMode ? Colors.grey[800] : Colors.grey[300],
-                child: Icon(Icons.music_note,
-                    color: isDarkMode ? Colors.grey[600] : Colors.grey[400]),
+          Container(
+            width: 50.w,
+            height: 50.h,
+            clipBehavior: Clip.hardEdge,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  spreadRadius: 5,
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: OverflowBox(
+              alignment: Alignment.center,
+              maxWidth: 100
+                  .w, // 20% wider than container (adjust for crop amount)
+              maxHeight: 100.h, // 20% taller than container
+              child: Image.memory(
+                scale: 0.1,
+                downloadedSong.image!,
+                fit: BoxFit.cover,
               ),
             ),
           ),
@@ -147,7 +159,7 @@ class CollapsedCurrentSong extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: isDarkMode ? Colors.white : Colors.black87,
+                    color: Colors.white,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -156,7 +168,7 @@ class CollapsedCurrentSong extends StatelessWidget {
                   downloadedSong.artist,
                   style: TextStyle(
                     fontSize: 14,
-                    color: isDarkMode ? Colors.grey[400] : Colors.grey[700],
+                    color: Colors.white.withOpacity(0.7)
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -170,7 +182,7 @@ class CollapsedCurrentSong extends StatelessWidget {
             children: [
               _buildControlButton(
                 context,
-                CupertinoIcons.backward_fill,
+                CupertinoIcons.backward_end,
                     () => context.read<PlayerBloc>().add(PlayPreviousEvent()),
               ),
               const SizedBox(width: 8),
@@ -178,7 +190,7 @@ class CollapsedCurrentSong extends StatelessWidget {
               const SizedBox(width: 8),
               _buildControlButton(
                 context,
-                CupertinoIcons.forward_fill,
+                CupertinoIcons.forward_end,
                     () => context.read<PlayerBloc>().add(PlayNextSongEvent()),
               ),
             ],

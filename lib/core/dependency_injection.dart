@@ -92,6 +92,7 @@ import 'package:jazz/features/search_feature/data/data_sources/youtube_data_sour
 import 'package:jazz/features/search_feature/data/repositories_impl/song_repository_impl.dart';
 import 'package:jazz/features/search_feature/domain/repositories/song_repository.dart';
 import 'package:jazz/features/search_feature/domain/usecases/fetch_artist.dart';
+import 'package:jazz/features/search_feature/domain/usecases/fetch_artists_use_case.dart';
 import 'package:jazz/features/search_feature/domain/usecases/fetch_track_thumbnail.dart';
 import 'package:jazz/features/search_feature/domain/usecases/get_suggestions_use_case.dart';
 import 'package:jazz/features/search_feature/domain/usecases/search_album.dart';
@@ -244,6 +245,7 @@ final di = GetIt.instance;
    di.registerLazySingleton<GetSuggestionsUseCase>(()=> GetSuggestionsUseCase(songRepository: di<SongRepository>()));
    di.registerLazySingleton<UpdateEmailUseCase>(()=> UpdateEmailUseCase(di<AuthRepository>()));
    di.registerLazySingleton<DeleteUserNotificationUseCase>(()=> DeleteUserNotificationUseCase(notificationRepository: di<NotificationRepository>()));
+   di.registerLazySingleton<FetchArtistsUseCase>(()=> FetchArtistsUseCase(songRepository: di<SongRepository>()));
    // Register Blocs
    di.registerLazySingleton<DownloadBloc>(() => DownloadBloc(di<DownloadSongs>(),downloadedSongsBloc: di<DownloadedSongsBloc>()));
 
@@ -259,9 +261,10 @@ final di = GetIt.instance;
    di.registerLazySingleton<PlayerBloc>(()=> PlayerBloc(
        getMp3StreamUseCase: di<GetMp3StreamUseCase>(),
        getRelatedSongUseCase: di<GetRelatedSongUseCase>(),
+     
        getLyrics: di<GetLyrics>()));
    di.registerLazySingleton(()=> SearchBloc(searchSongs: di<SearchSongs>(), searchAlbums: di<SearchAlbums>(), searchArtists: di<SearchArtists>()));
-   di.registerLazySingleton<ArtistBloc>(()=> ArtistBloc(fetchArtistUseCase: di<FetchArtistUseCase>()));
+   di.registerLazySingleton<ArtistBloc>(()=> ArtistBloc(fetchArtistUseCase: di<FetchArtistUseCase>(),fetchArtistsUseCase: di<FetchArtistsUseCase>()));
    di.registerLazySingleton<PlaylistBloc>(()=> PlaylistBloc(
        fetchTrendingSongsUseCase: di<FetchTrendingSongsUseCase>(),
        fetchBillboardSongsUseCase:di<FetchBillboardSongsUseCase>(),
@@ -290,7 +293,8 @@ final di = GetIt.instance;
     getFriendsUseCase: di<GetFriendsUseCase>(),
     resetPasswordUseCase: di<ResetPasswordUseCase>(),
     updateEmailUseCase: di<UpdateEmailUseCase>(),
-    userBloc: di<UserBloc>()
+    userBloc: di<UserBloc>(),
+    playerBloc: di<PlayerBloc>()
    ));
    di.registerLazySingleton<SearchUsersBloc>(()=> SearchUsersBloc(di<SearchUsersUseCase>()));
    di.registerLazySingleton<FriendRequestBloc>(()=> FriendRequestBloc(

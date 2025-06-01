@@ -63,4 +63,9 @@ class SongRepositoryImpl implements SongRepository {
   Future<List> getSuggestions(String query) {
   return dataSource.getSuggestions(query);
   }
+
+  @override
+  Future<List> fetchArtists(List<String> artistIdList) {
+     return artistDataSource.fetchArtists(artistIdList);
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:jazz/core/app_color.dart';
 import 'package:jazz/core/routes.dart';
 
 class ResetPasswordSuccessScreen extends StatelessWidget {
@@ -8,6 +9,7 @@ class ResetPasswordSuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.primaryBackgroundColor,
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [

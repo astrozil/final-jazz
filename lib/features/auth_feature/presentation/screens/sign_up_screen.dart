@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:jazz/core/app_color.dart';
 import 'package:jazz/core/routes.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/auth_bloc/auth_bloc.dart';
 
@@ -275,6 +276,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   },
   child: Scaffold(
+    backgroundColor: AppColors.primaryBackgroundColor,
     resizeToAvoidBottomInset: false,
       body: Stack(
         children: [

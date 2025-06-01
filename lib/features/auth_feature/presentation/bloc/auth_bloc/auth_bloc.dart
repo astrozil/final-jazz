@@ -16,6 +16,7 @@ import 'package:jazz/features/auth_feature/domain/use_case/auth_use_cases/sign_u
 import 'package:jazz/features/auth_feature/domain/use_case/auth_use_cases/update_email_use_case.dart';
 import 'package:jazz/features/auth_feature/domain/use_case/auth_use_cases/update_user_profile_use_case.dart';
 import 'package:jazz/features/auth_feature/presentation/bloc/user_bloc/user_bloc.dart';
+import 'package:jazz/features/stream_feature/presentation/bloc/playerBloc/player_bloc.dart';
 import 'package:meta/meta.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -35,6 +36,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ResetPasswordUseCase resetPasswordUseCase;
  final UpdateEmailUseCase updateEmailUseCase;
  final UserBloc userBloc;
+ final PlayerBloc playerBloc;
 
     StreamSubscription? friendsSubscription;
   AuthBloc( {
@@ -49,7 +51,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.getFriendsUseCase,
     required this.resetPasswordUseCase,
     required this.updateEmailUseCase,
-    required this.userBloc
+    required this.userBloc,
+    required this.playerBloc
   }) : super(AuthInitial()) {
     on<SignUpEvent>((event, emit) async {
       emit(AuthLoading());
@@ -385,6 +388,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     });
     on<LogoutEvent>((event, emit) async {
       await logoutUseCase();
+      playerBloc.stopOnLogout();
       emit(IsLoggedIn(isLoggedIn: false));
     });
 
@@ -471,7 +475,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     });
 
     on<FetchUserDataEvent>((event, emit) async {
-      emit(AuthLoading());
+
       try {
         final firebaseUser = FirebaseAuth.instance.currentUser;
         if (firebaseUser != null) {

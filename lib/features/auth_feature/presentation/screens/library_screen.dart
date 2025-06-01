@@ -17,6 +17,8 @@ import 'package:jazz/features/playlist_feature/presentation/bloc/playlist_bloc/p
 import 'package:photo_manager/photo_manager.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supa;
 
+import '../../../../core/router.dart';
+
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
 
@@ -122,14 +124,29 @@ class LibraryScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            Text(FirebaseAuth.instance.currentUser!.email!
+                              ,
+                              style:  TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 18,
+                               
+                              ),
+                            ),
+                          ],
                         ),
+                       
                       ],
                     ),
                   ),
@@ -173,7 +190,7 @@ class LibraryScreen extends StatelessWidget {
                     Icons.person_outline,
                     "Artists",
                     onTap: () {
-                      // Navigate to Artists
+                      Navigator.pushNamed(context, Routes.followingArtistsScreen);
                     },
                   ),
                   _buildMenuItem(
@@ -205,7 +222,7 @@ class LibraryScreen extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     Icons.search,
-                    "Search friends",
+                    "Search Users",
                     onTap: () {
 
                       Navigator.pushNamed(context, Routes.userSearchScreen);
@@ -226,7 +243,7 @@ class LibraryScreen extends StatelessWidget {
                     Icons.person_add_outlined,
                     "Friend Requests",
                     onTap: () {
-                      context.read<FriendRequestBloc>().add(GetReceivedFriendRequestsEvent());
+
                       Navigator.pushNamed(context, Routes.friendRequestsScreen);
                     },
                   ),
@@ -236,7 +253,7 @@ class LibraryScreen extends StatelessWidget {
                     Icons.person_add_alt_sharp,
                     "Sent Friend Requests",
                     onTap: () {
-                      context.read<FriendRequestBloc>().add(GetSentFriendRequestsEvent());
+
                       Navigator.pushNamed(context, Routes.sentFriendRequestsScreen);
                     },
                   ),
@@ -306,6 +323,8 @@ class LibraryScreen extends StatelessWidget {
                             ),
                             onPressed: (){
                           context.read<AuthBloc>().add(LogoutEvent());
+
+
                         }, child: Text("Logout",style: TextStyle(color: Colors.white),)));
                       });
 

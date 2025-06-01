@@ -24,7 +24,7 @@ class _SentFriendRequestsScreenState extends State<SentFriendRequestsScreen> {
     return Scaffold(
       backgroundColor: AppColors.primaryBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.secondaryBackgroundColor,
+        backgroundColor: AppColors.primaryBackgroundColor,
         elevation: 0,
         centerTitle: true,
         title: const Text(
